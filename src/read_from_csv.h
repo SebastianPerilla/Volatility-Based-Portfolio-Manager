@@ -5,11 +5,10 @@
 #include <string>
 
 
-int main() {
-    std::ifstream file("data.csv");  // Open the CSV file
+void read_file(const std::string& file_name) {
+    std::ifstream file(file_name);  // Open the CSV file
     if (!file.is_open()) {
         std::cerr << "Could not open the file!" << std::endl;
-        return 1;
     }
 
     std::string line;
@@ -31,5 +30,4 @@ int main() {
     }
 
     file.close();  // Close the file
-    return 0;
 }

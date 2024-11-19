@@ -10,7 +10,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # We normally have a CMakeLists.txt file in each directory that has something that needs to be built
-add_subdirectory(include)
 add_subdirectory(src) # This line tells CMake to go to the src directory and run the CMakeLists.txt file there
 enable_testing() # This line allows to call ctest after compilation
 add_subdirectory(tests)
