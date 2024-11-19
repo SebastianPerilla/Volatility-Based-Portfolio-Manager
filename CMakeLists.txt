@@ -19,7 +19,17 @@ FetchContent_Declare(
     GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
     GIT_TAG 3.4.0
 )
-FetchContent_MakeAvailable(eigen)
+
+# Fetch nlohmann_json
+FetchContent_Declare(
+    json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
+
+FetchContent_MakeAvailable(eigen json)
+
+# Find CURL
+find_package(CURL REQUIRED)
 
 # Enable testing before adding test subdirectory
 enable_testing()
