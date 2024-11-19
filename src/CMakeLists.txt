@@ -7,7 +7,6 @@ add_executable(montecarlo montecarlo.cpp)
 add_executable(extractor extractor.cpp)
 
 # Link libraries
-target_link_libraries(montecarlo PUBLIC read_from_csv Eigen3::Eigen)
 target_link_libraries(extractor PRIVATE
     CURL::libcurl
     nlohmann_json::nlohmann_json

@@ -2,11 +2,12 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <map>
+#include <sstream>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 #include <ctime>
-#include <sstream>
-#include <algorithm>
+#include <iomanip> // For std::setprecision and std::fixed
 
 using json = nlohmann::json;
 
@@ -16,7 +17,7 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* use
     return size * nmemb;
 }
 
-// Add this function to convert dates to Unix timestamps
+// Convert dates to Unix timestamps
 long convert_to_timestamp(const std::string& date) {
     std::tm tm = {};
     std::istringstream ss(date);
@@ -24,32 +25,15 @@ long convert_to_timestamp(const std::string& date) {
     return std::mktime(&tm);
 }
 
-// Add this new function for timestamp conversion
-std::string format_timestamp(long unix_timestamp) {
-    std::time_t time = unix_timestamp;
-    std::tm* tm = std::localtime(&time);
-    char buffer[32];
-    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S-05:00", tm);
-    return std::string(buffer);
-}
-
-// Add this struct before get_stock_data function
-struct StockRecord {
-    std::string ticker;
-    std::string timestamp;
-    double price;
-    long volume;
-};
-
-// Function to get stock data
-void get_stock_data(std::vector<StockRecord>& all_records, const std::string& ticker, const std::string& start_date, const std::string& end_date) {
+// Fetch stock data and store prices in a map
+void get_stock_data(const std::string& ticker, const std::string& start_date, const std::string& end_date, 
+                    std::map<std::string, std::vector<long double>>& ticker_to_prices) {
     CURL* curl = curl_easy_init();
     if (!curl) {
         std::cerr << "Failed to initialize CURL" << std::endl;
         return;
     }
 
-    // Convert dates to timestamps
     long period1 = convert_to_timestamp(start_date);
     long period2 = convert_to_timestamp(end_date);
 
@@ -58,7 +42,6 @@ void get_stock_data(std::vector<StockRecord>& all_records, const std::string& ti
                       "&period2=" + std::to_string(period2) +
                       "&interval=1h";
 
-    // Add a user agent to avoid 403 errors
     struct curl_slist* headers = NULL;
     headers = curl_slist_append(headers, "User-Agent: Mozilla/5.0");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -77,61 +60,51 @@ void get_stock_data(std::vector<StockRecord>& all_records, const std::string& ti
     }
 
     try {
-        std::cout << "Response size: " << response_data.length() << std::endl;
-        std::cout << "First 200 characters of response: " << response_data.substr(0, 200) << std::endl;
         json data = json::parse(response_data);
 
-        // Get timezone and GMT offset from the response
-        std::string timezone = data["chart"]["result"][0]["meta"]["timezone"];
-        int gmtOffset = data["chart"]["result"][0]["meta"]["gmtoffset"];
-
-        // Update format_timestamp to use the GMT offset
-        auto format_with_tz = [](long unix_timestamp) {
-            std::time_t time = unix_timestamp;
-            std::tm* tm = std::localtime(&time);
-            char buffer[32];
-
-            // Check if date is in DST
-            bool is_dst = tm->tm_isdst > 0;
-
-            // EST is -5:00, EDT is -4:00
-            std::string tz_str = is_dst ? "-04:00" : "-05:00";
-
-            std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm);
-            return std::string(buffer) + tz_str;
-        };
-
-        // Instead of writing directly to file, store records in memory
         if (!data["chart"]["result"][0]["timestamp"].is_null()) {
             auto timestamps = data["chart"]["result"][0]["timestamp"];
             auto prices = data["chart"]["result"][0]["indicators"]["quote"][0]["close"];
-            auto volumes = data["chart"]["result"][0]["indicators"]["quote"][0]["volume"];
 
             for (size_t i = 0; i < timestamps.size(); i++) {
-                if (!prices[i].is_null() && !volumes[i].is_null()) {
-                    StockRecord record{
-                        ticker,
-                        format_with_tz(timestamps[i]),
-                        prices[i],
-                        volumes[i]
-                    };
-                    all_records.push_back(record);
+                if (!prices[i].is_null()) {
+                    ticker_to_prices[ticker].push_back(static_cast<long double>(prices[i]));
                 }
             }
 
-            std::cout << "Data for " << ticker << " has been collected" << std::endl;
+            std::cout << "Data for " << ticker << " has been processed and stored." << std::endl;
         }
     } catch (const json::exception& e) {
         std::cerr << "JSON error: " << e.what() << std::endl;
-        std::cerr << "Response received: " << response_data.substr(0, 100) << "..." << std::endl;
     }
 
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
 }
 
+// Save data to a CSV file
+void save_to_csv(const std::string& filename, const std::map<std::string, std::vector<long double>>& ticker_to_prices) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return;
+    }
+
+    file << "ticker,price\n";
+    file << std::fixed << std::setprecision(20); 
+    for (const auto& [ticker, prices] : ticker_to_prices) {
+        for (const auto& price : prices) {
+            file << ticker << "," << price << "\n";
+        }
+    }
+    file.close();
+
+    std::cout << "Data has been saved to " << filename << std::endl;
+}
+
 int main() {
-    std::vector<StockRecord> all_records;
+    // Map to store prices for each ticker
+    std::map<std::string, std::vector<long double>> ticker_to_prices;
 
     // List of tickers
     std::vector<std::string> tickers = {
@@ -139,28 +112,24 @@ int main() {
         "META", "TSLA", "TSM", "AVGO", "ORCL"
     };
 
-    // Collect data for each ticker
+    // Fetch data for each ticker
     for (const auto& ticker : tickers) {
-        get_stock_data(all_records, ticker, "2024-01-01", "2024-11-18");
+        get_stock_data(ticker, "2024-01-01", "2024-11-18", ticker_to_prices);
     }
 
-    // Sort records by timestamp
-    std::sort(all_records.begin(), all_records.end(),
-        [](const StockRecord& a, const StockRecord& b) {
-            return a.timestamp < b.timestamp;
-        });
+    // Save data to a CSV file
+    save_to_csv("stock_data.csv", ticker_to_prices);
 
-    // Write sorted records to file
-    std::ofstream file("stock_data.csv");
-    file << "ticker,timestamp,price,volume\n";
-
-    for (const auto& record : all_records) {
-        file << record.ticker << ","
-             << record.timestamp << ","
-             << record.price << ","
-             << record.volume << "\n";
+    // Print the ticker-to-prices mapping
+    std::cout << std::fixed << std::setprecision(20);
+    for (const auto& [ticker, prices] : ticker_to_prices) {
+        std::cout << "Ticker: " << ticker << "\nPrices: ";
+        for (const auto& price : prices) {
+            std::cout << price << " ";
+        }
+        std::cout << "\n";
     }
 
-    file.close();
     return 0;
 }
+

@@ -13,12 +13,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # Include FetchContent
 include(FetchContent)
 
-# Fetch Eigen
-FetchContent_Declare(
-    eigen
-    GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-    GIT_TAG 3.4.0
-)
 
 # Fetch nlohmann_json
 FetchContent_Declare(
@@ -26,7 +20,7 @@ FetchContent_Declare(
     URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
 )
 
-FetchContent_MakeAvailable(eigen json)
+FetchContent_MakeAvailable(json)
 
 # Find CURL
 find_package(CURL REQUIRED)
