@@ -5,186 +5,100 @@
 #include <iomanip>
 #include <map>
 #include <vector>
+#include <numeric>
 
-const int niter = 1000;
-const double av_x = -0.0930181e0;
-const double av_y = 0.0475899e0;
-const double av_xx = 1.06614e0;
-const double av_yy = 1.28152e0;
-const double av_xy = -0.504944e0;
-const int nsample = 100;
-const int ndim = 2; // Don't change this parameter.
-const double step_A = 0.1e0;
-const int nskip = 10;
 
-struct StockData {
-    std::vector<double> prices; // Store stock prices for a ticker
+
+
+// Function that returns the average of a vector of doubles
+// Return datatype: double 
+double average(std::vector<double>& return_list) {
+    double average = std::accumulate(return_list.begin(), return_list.end(), 0.0) / return_list.size();
+    return average;
 };
 
-// Gaussian Random Number Generator with Box Muller Algorithm
-int BoxMuller(double& p, double& q) {
-    double pi = 2e0 * asin(1e0);
-    double r = (double)rand() / RAND_MAX;
-    double s = (double)rand() / RAND_MAX;
-    p = sqrt(-2e0 * log(r)) * sin(2e0 * pi * s);
-    q = sqrt(-2e0 * log(r)) * cos(2e0 * pi * s);
-    return 0;
-}
+// Function that returns a vector of the difference between a vector of 
+// log_return for that time period and the average return for the same time period
+double iter_variance(const std::vector<double>& log_return_for_time_period, double average_return_for_time_period) {
+        double variance_result = 0.0;
+        int count = 0;
+        for (std::vector<double>::const_iterator it = log_return_for_time_period.begin(); it != log_return_for_time_period.end(); ++it) {
+            // std::cout<< *it - average_return_for_time_period<< std::endl;
+            variance_result = std::pow((*it - average_return_for_time_period), 2.0) + variance_result;
 
-// Calculation of the action
-double calc_action(const double A[ndim][ndim], const double mu[ndim]) {
-    double action = A[0][0] * ((mu[0] - av_x) * (mu[0] - av_x) + av_xx - av_x * av_x)
-                    + A[1][1] * ((mu[1] - av_y) * (mu[1] - av_y) + av_yy - av_y * av_y)
-                    + A[0][1] * ((mu[0] - av_x) * (mu[1] - av_y) + av_xy - av_x * av_y) * 2e0
-                    - log(A[0][0] * A[1][1] - A[0][1] * A[1][0]);
+            count++;
+        };
+        return variance_result;
 
-    action = 0.5e0 * action * nsample;
+};
 
-    action = action + 0.5e0 * A[0][0] * A[0][0] + 0.5e0 * A[1][1] * A[1][1] + A[0][1] * A[0][1] + 0.5e0 * mu[0] * mu[0] + 0.5e0 * mu[1] * mu[1];
-    return action;
-}
-
-void read_csv(const std::string& filename, std::map<std::string, StockData>& stock_data) {
-    std::ifstream file(filename);
-    std::string line;
-
-    // Skip header line
-    std::getline(file, line);
-
-    // Read each line from the CSV file
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string ticker, timestamp;
-        double price;
-        int volume;
-
-        // Read ticker, timestamp, price, and volume
-        std::getline(ss, ticker, ',');
-        std::getline(ss, timestamp, ',');
-        ss >> price;
-        ss.ignore(); // Ignore the comma
-        ss >> volume;
-
-        // Store the price for the given ticker
-        stock_data[ticker].prices.push_back(price);
+// Function that returns the logarithmic return for a given time period
+std::vector<double> logarithmic_return_function(std::vector<double>& price) {
+    std::vector<double> r_t_list;
+    
+    // Using a regular iterator
+    for (std::vector<double>::iterator it = price.begin(); it != price.end()-1; ++it) {
+        double r_t = log(*(it + 1) / *it);
+        // std::cout << *(it + 1) - *it << " ";
+        r_t_list.push_back(r_t);
+    
     }
-}
+    std::cout << std::endl;
+    return r_t_list; // Assuming you want to return the average of r_t_list
+};
 
-// Main function to perform MCMC and calculate mean and variance
+
+
+// Function that returns the average return for a given time period
+double average_return(std::vector<double> r_average_list) {
+    double r_bar = average(r_average_list);
+    return r_bar;
+};
+
+
+// Function that returns the volatility for a given time period: Hourly in this case
+double volatility(std::vector<double>& log_return, double average) {
+    double variance = iter_variance(log_return, average)/log_return.size();
+    double volatility = std::sqrt(variance);
+    return volatility;
+};
+
+
+//Function with the main code testing each portion of the volatility calculation
 int main() {
-    double mu[ndim];
-    double A[ndim][ndim];
-    double dx;
-    int naccept = 0;
-    srand((unsigned)time(NULL));
+    std::vector<double> price_list = {
+    47.66699981689453, 48.11602020263672, 48.10852813720703, 48.185997009277344, 
+    48.1879997253418, 47.88399887084961, 48.185001373291016, 47.49448776245117, 
+    47.751502990722656, 47.773990631103516, 47.62432861328125, 47.69300079345703, 
+    47.652000427246094, 47.56999969482422, 47.95499801635742, 48.305660247802734, 
+    48.26900100708008, 48.279998779296875, 48.14400100708008, 48.19586944580078, 
+    47.99399948120117, 48.95199966430664, 49.38750076293945, 49.04125213623047, 
+    49.15599822998047, 49.209938049316406, 48.868499755859375, 49.09000015258789, 
+    51.32600021362305, 51.28200149536133
+    };
 
-    // Variables to accumulate sums for mean and variance calculation
-    double sum_mu[ndim] = {0.0, 0.0};
-    double sum_mu_sq[ndim] = {0.0, 0.0};
-    double sum_A[ndim][ndim] = {{0.0, 0.0}, {0.0, 0.0}};
-    double sum_A_sq[ndim][ndim] = {{0.0, 0.0}, {0.0, 0.0}};
+    // Functions
+    std::vector<double> log_returns = logarithmic_return_function(price_list);
 
-    // Read stock data from CSV file
-    std::map<std::string, StockData> stock_data;
-    read_csv("../test.csv", stock_data);
+    // std::cout << "Log Returns: \n";
+    // for (double value : log_returns) {
+    //     std::cout << value << " \n";
+    // };
+    // std::cout << std::endl;
+    
 
-    // Loop over each stock (ticker)
-    for (const auto& [ticker, data] : stock_data) {
-        std::cout << "Processing " << ticker << "...\n";
+    std::cout << "Average Return: \n" << average_return(log_returns) << std::endl;
 
-        // Set initial configuration
-        A[0][0] = 1e0;
-        A[1][1] = 1e0;
-        A[0][1] = 0e0;
-        A[1][0] = A[0][1];
-        mu[0] = 0e0;
-        mu[1] = 0e0;
+    std::cout << std::endl;
+    
 
-        // Perform MCMC for this stock
-        for (int iter = 0; iter != niter; iter++) {
-            double r1, r2;
-            BoxMuller(r1, r2);
-            mu[0] = r1 / sqrt(1e0 + nsample * A[0][0]);
-            mu[0] = mu[0] - nsample / (1e0 + nsample * A[0][0]) * (A[0][1] * (mu[1] - av_y) - A[0][0] * av_x);
+    std::cout << "Variance: \n" << iter_variance(log_returns, average_return(log_returns)) << std::endl;
 
-            mu[1] = r2 / sqrt(1e0 + nsample * A[1][1]);
-            mu[1] = mu[1] - nsample / (1e0 + nsample * A[1][1]) * (A[1][0] * (mu[0] - av_x) - A[1][1] * av_y);
+    std::cout << std::endl;
 
-            // Metropolis update for A
-            double backup_A[ndim][ndim];
-            backup_A[0][0] = A[0][0];
-            backup_A[1][1] = A[1][1];
-            backup_A[0][1] = A[0][1];
-            backup_A[1][0] = A[1][0];
-
-            double action_init = calc_action(A, mu);
-            dx = (double)rand() / RAND_MAX - 0.5e0;
-            A[0][0] = A[0][0] + dx * step_A * 2e0;
-            dx = (double)rand() / RAND_MAX - 0.5e0;
-            A[1][1] = A[1][1] + dx * step_A * 2e0;
-            dx = (double)rand() / RAND_MAX - 0.5e0;
-            A[1][0] = A[1][0] + dx * step_A * 2e0;
-            A[0][1] = A[0][1] + dx * step_A * 2e0;
-            double action_fin = calc_action(A, mu);
-
-            double metropolis = (double)rand() / RAND_MAX;
-            if (exp(action_init - action_fin) > metropolis) {
-                naccept++;
-            } else {
-                A[0][0] = backup_A[0][0];
-                A[1][1] = backup_A[1][1];
-                A[0][1] = backup_A[0][1];
-                A[1][0] = backup_A[1][0];
-            }
-
-            // Accumulate sums for mean and variance calculation
-            for (int i = 0; i < ndim; ++i) {
-                sum_mu[i] += mu[i];
-                sum_mu_sq[i] += mu[i] * mu[i];
-                for (int j = 0; j < ndim; ++j) {
-                    sum_A[i][j] += A[i][j];
-                    sum_A_sq[i][j] += A[i][j] * A[i][j];
-                }
-            }
-
-            if ((iter + 1) % nskip == 0) {
-                std::cout << std::fixed << std::setprecision(6)
-                          << A[0][0] << "  "
-                          << A[1][1] << "  "
-                          << A[0][1] << "  "
-                          << mu[0] << "  "
-                          << mu[1] << "  "
-                          << (double)naccept / (iter + 1) << std::endl;
-            }
-        }
-
-        // Calculate final mean and variance for this stock
-        double mean_mu[ndim];
-        double var_mu[ndim];
-        double mean_A[ndim][ndim];
-        double var_A[ndim][ndim];
-
-        for (int i = 0; i < ndim; ++i) {
-            mean_mu[i] = sum_mu[i] / niter;
-            var_mu[i] = (sum_mu_sq[i] / niter) - (mean_mu[i] * mean_mu[i]);
-        }
-
-        for (int i = 0; i < ndim; ++i) {
-            for (int j = 0; j < ndim; ++j) {
-                mean_A[i][j] = sum_A[i][j] / niter;
-                var_A[i][j] = (sum_A_sq[i][j] / niter) - (mean_A[i][j] * mean_A[i][j]);
-            }
-        }
-
-        // Output the mean and variance
-        std::cout << "Stock: " << ticker << "\n";
-        std::cout << "Mean Mu: [" << mean_mu[0] << ", " << mean_mu[1] << "]\n";
-        std::cout << "Variance Mu: [" << var_mu[0] << ", " << var_mu[1] << "]\n";
-        std::cout << "Mean A: [[" << mean_A[0][0] << ", " << mean_A[0][1] << "], ["
-                  << mean_A[1][0] << ", " << mean_A[1][1] << "]]\n";
-        std::cout << "Variance A: [[" << var_A[0][0] << ", " << var_A[0][1] << "], ["
-                  << var_A[1][0] << ", " << var_A[1][1] << "]]\n";
-    }
-
+    std::cout << "Volatility: \n";
+    std::cout << volatility(log_returns, average(log_returns));
+    
+    std::cout << std::endl;
     return 0;
 }
