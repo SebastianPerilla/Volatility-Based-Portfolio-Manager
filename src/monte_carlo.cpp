@@ -6,7 +6,7 @@
 #include <map>
 #include <vector>
 
-const int niter = 1000;
+const int niter = 1000000;
 const double av_x = -0.0930181e0;
 const double av_y = 0.0475899e0;
 const double av_xx = 1.06614e0;
@@ -86,7 +86,7 @@ int main() {
 
     // Read stock data from CSV file
     std::map<std::string, StockData> stock_data;
-    read_csv("test.csv", stock_data);
+    read_csv("data.csv", stock_data);
 
     // Loop over each stock (ticker)
     for (const auto& [ticker, data] : stock_data) {
