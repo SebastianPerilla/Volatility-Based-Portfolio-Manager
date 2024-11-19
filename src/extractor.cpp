@@ -47,7 +47,7 @@ void get_stock_data(const std::string& ticker, const std::string& start_date, co
     std::string url = "https://query1.finance.yahoo.com/v8/finance/chart/" + ticker +
                       "?period1=" + std::to_string(period1) +
                       "&period2=" + std::to_string(period2) +
-                      "&interval=1d";
+                      "&interval=1h";
 
     // Add a user agent to avoid 403 errors
     struct curl_slist* headers = NULL;
@@ -71,6 +71,26 @@ void get_stock_data(const std::string& ticker, const std::string& start_date, co
         std::cout << "Response size: " << response_data.length() << std::endl;
         std::cout << "First 200 characters of response: " << response_data.substr(0, 200) << std::endl;
         json data = json::parse(response_data);
+
+        // Get timezone and GMT offset from the response
+        std::string timezone = data["chart"]["result"][0]["meta"]["timezone"];
+        int gmtOffset = data["chart"]["result"][0]["meta"]["gmtoffset"];
+
+        // Update format_timestamp to use the GMT offset
+        auto format_with_tz = [](long unix_timestamp) {
+            std::time_t time = unix_timestamp;
+            std::tm* tm = std::localtime(&time);
+            char buffer[32];
+
+            // Check if date is in DST
+            bool is_dst = tm->tm_isdst > 0;
+
+            // EST is -5:00, EDT is -4:00
+            std::string tz_str = is_dst ? "-04:00" : "-05:00";
+
+            std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm);
+            return std::string(buffer) + tz_str;
+        };
 
         // First check if file exists and is empty
         bool file_exists = std::ifstream("stock_data.csv").good();
@@ -99,9 +119,9 @@ void get_stock_data(const std::string& ticker, const std::string& start_date, co
 
             for (size_t i = 0; i < timestamps.size(); i++) {
                 if (!prices[i].is_null() && !volumes[i].is_null()) {
-                    std::string formatted_date = format_timestamp(timestamps[i]);
+                    std::string formatted_date = format_with_tz(timestamps[i]);
                     file << ticker << ","
-                         << formatted_date << ","  // Using formatted date instead of timestamp
+                         << formatted_date << ","
                          << prices[i] << ","
                          << volumes[i] << "\n";
                 }
