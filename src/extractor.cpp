@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 #include <ctime>
 #include <sstream>
+#include <algorithm>
 
 using json = nlohmann::json;
 
@@ -32,8 +33,16 @@ std::string format_timestamp(long unix_timestamp) {
     return std::string(buffer);
 }
 
+// Add this struct before get_stock_data function
+struct StockRecord {
+    std::string ticker;
+    std::string timestamp;
+    double price;
+    long volume;
+};
+
 // Function to get stock data
-void get_stock_data(const std::string& ticker, const std::string& start_date, const std::string& end_date) {
+void get_stock_data(std::vector<StockRecord>& all_records, const std::string& ticker, const std::string& start_date, const std::string& end_date) {
     CURL* curl = curl_easy_init();
     if (!curl) {
         std::cerr << "Failed to initialize CURL" << std::endl;
@@ -92,26 +101,7 @@ void get_stock_data(const std::string& ticker, const std::string& start_date, co
             return std::string(buffer) + tz_str;
         };
 
-        // First check if file exists and is empty
-        bool file_exists = std::ifstream("stock_data.csv").good();
-        bool file_empty = true;
-        if (file_exists) {
-            std::ifstream check_file("stock_data.csv");
-            std::string first_line;
-            if (std::getline(check_file, first_line) && first_line.length() > 0) {
-                file_empty = false;
-            }
-        }
-
-        // Open file in append mode
-        std::ofstream file("stock_data.csv", std::ios::app);
-
-        // Write header only if file is new or empty
-        if (file_empty) {
-            file << "ticker,timestamp,price,volume\n";
-        }
-
-        // Check if we have valid chart data
+        // Instead of writing directly to file, store records in memory
         if (!data["chart"]["result"][0]["timestamp"].is_null()) {
             auto timestamps = data["chart"]["result"][0]["timestamp"];
             auto prices = data["chart"]["result"][0]["indicators"]["quote"][0]["close"];
@@ -119,17 +109,18 @@ void get_stock_data(const std::string& ticker, const std::string& start_date, co
 
             for (size_t i = 0; i < timestamps.size(); i++) {
                 if (!prices[i].is_null() && !volumes[i].is_null()) {
-                    std::string formatted_date = format_with_tz(timestamps[i]);
-                    file << ticker << ","
-                         << formatted_date << ","
-                         << prices[i] << ","
-                         << volumes[i] << "\n";
+                    StockRecord record{
+                        ticker,
+                        format_with_tz(timestamps[i]),
+                        prices[i],
+                        volumes[i]
+                    };
+                    all_records.push_back(record);
                 }
             }
 
-            std::cout << "Data for " << ticker << " has been saved to stock_data.csv" << std::endl;
+            std::cout << "Data for " << ticker << " has been collected" << std::endl;
         }
-        file.close();
     } catch (const json::exception& e) {
         std::cerr << "JSON error: " << e.what() << std::endl;
         std::cerr << "Response received: " << response_data.substr(0, 100) << "..." << std::endl;
@@ -140,10 +131,7 @@ void get_stock_data(const std::string& ticker, const std::string& start_date, co
 }
 
 int main() {
-    // Clear the file and write headers
-    std::ofstream file("stock_data.csv");
-    file << "ticker,timestamp,price,volume\n";
-    file.close();
+    std::vector<StockRecord> all_records;
 
     // List of tickers
     std::vector<std::string> tickers = {
@@ -151,10 +139,28 @@ int main() {
         "META", "TSLA", "TSM", "AVGO", "ORCL"
     };
 
-    // Get data for each ticker
+    // Collect data for each ticker
     for (const auto& ticker : tickers) {
-        get_stock_data(ticker, "2024-01-01", "2024-11-18");
+        get_stock_data(all_records, ticker, "2024-01-01", "2024-11-18");
     }
 
+    // Sort records by timestamp
+    std::sort(all_records.begin(), all_records.end(),
+        [](const StockRecord& a, const StockRecord& b) {
+            return a.timestamp < b.timestamp;
+        });
+
+    // Write sorted records to file
+    std::ofstream file("stock_data.csv");
+    file << "ticker,timestamp,price,volume\n";
+
+    for (const auto& record : all_records) {
+        file << record.ticker << ","
+             << record.timestamp << ","
+             << record.price << ","
+             << record.volume << "\n";
+    }
+
+    file.close();
     return 0;
 }
