@@ -2,7 +2,7 @@
 
 ## Concept Diagram
 
-![alt text](image.png)
+![alt text](readme_images/image.png)
 
 ## Steps
 
