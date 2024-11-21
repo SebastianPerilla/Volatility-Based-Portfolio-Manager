@@ -1,4 +1,9 @@
-add_library(monte_carlo SHARED monte_carlo.h)
-set_target_properties(monte_carlo PROPERTIES LINKER_LANGUAGE CXX) # need to specify C++ as a linker language
-target_link_libraries(monte_carlo)
+# Create library from header file
+add_library(read_from_csv INTERFACE)
+target_include_directories(read_from_csv INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Create executable
+add_executable(volatility volatility.cpp)
+
+# Link libraries
+target_link_libraries(volatility PUBLIC read_from_csv Eigen3::Eigen)
