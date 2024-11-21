@@ -85,7 +85,7 @@ std::map<std::string, double> true_volatility(std::map<std::string, std::vector<
 
             std::cout << "\nTicker: " << ticker << std::endl;
             std::cout << "Current Volatility (Updated): " << current_volatility << std::endl;
-            standard_ticker_vol_map[ticker] = current_volatility;
+            true_volatility_output[ticker] = current_volatility;
 
         } else {
             std::cout << ticker << ": Not enough data" << std::endl;
@@ -113,6 +113,10 @@ int main() {
 
     std::map<std::string, double> output = ticker_to_vol_hourly(standard_volatility);
     std::map<std::string, double> true_vol = true_volatility(standard_volatility, output);
+
+    for (const auto& pair : true_vol) {
+        std::cout << pair.first << ": " << pair.second << std::endl;
+    }
 
     return 0;
 }
