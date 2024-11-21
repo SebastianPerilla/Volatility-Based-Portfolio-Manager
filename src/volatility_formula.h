@@ -4,8 +4,6 @@
 #include <cmath>
 #include <iostream>
 
-
-
 // Function that returns the average of a vector of doubles
 // Return datatype: double 
 double average(std::vector<double>& return_list) {
@@ -59,3 +57,16 @@ double volatility(std::vector<double>& log_return, double average) {
     double volatility = std::sqrt(variance);
     return volatility;
 };
+
+
+double update_volatility(double old_volatility, double new_price, double old_price, double lambda) {
+    // Calculate the log return
+    double r_t = log(new_price / old_price);
+    
+    // Update variance using EWMA formula
+    double old_variance = std::pow(old_volatility, 2.0);
+    double new_variance = (1.0 - lambda) * std::pow(r_t, 2.0) + lambda * old_variance;
+    
+    // Return the updated volatility (square root of variance)
+    return std::sqrt(new_variance);
+}
