@@ -1,34 +1,11 @@
 #pragma once
 
+#include "volatility_formula.h"
 #include <iostream>
 #include <map>
 #include <vector>
 #include <string>
 #include <cmath>
-
-// Function declarations
-std::vector<double> logarithmic_return_function(const std::vector<double>& prices);
-double average_return(const std::vector<double>& log_returns);
-double volatility(const std::vector<double>& log_returns, double avg_return);
-double update_volatility(double current_volatility, double new_price, double old_price, double lambda);
-double volatility_algorithm(std::vector<double>& stock_prices);
-
-
-struct Print_values {
-    void print_map(std::map<std::string, double> value) const {
-        for (const auto& pair : value) {
-            std::cout << pair.first << pair.second << std::endl;
-        }
-    }
-
-    void print_vector(std::vector<double> value) const {
-        for (const auto& i : value) {
-            std::cout << i << std::endl;
-        }
-    }
-
-};
-
 
 /*
 Function that returns a map with they key as the ticker(string) and the value as the 
@@ -57,15 +34,9 @@ std::map<std::string, double> ticker_to_vol_hourly(std::map<std::string, std::ve
         ticker_vol_map[ticker] = vol_algo;
 
 
-        // Print Statements incase you want to checkout the values for yourself
-        
-        
+        // // Print Statements incase you want to checkout the values for yourself
 
         // std::cout << "\n Ticker: " << ticker << std::endl;
-        Print_values print;
-
-        print.print_map(ticker_vol_map);
-        
         // std::cout << " Average return: " << avg_return << std::endl;
 
         // std::cout << "\n Log Returns: " << std::endl;
@@ -80,10 +51,9 @@ std::map<std::string, double> ticker_to_vol_hourly(std::map<std::string, std::ve
         // std::cout << std::endl;
         // std::cout << " Variances: " << iter_variance(log_returns, avg_return)  << std::endl;
         // std::cout << " Volatility: " << vol_algo << std::endl;
-        
     
-    }
-
+    };
+    
     return ticker_vol_map;
 }
 
@@ -112,7 +82,7 @@ std::map<std::string, double> true_volatility(std::map<std::string, std::vector<
 
             std::cout << "\nTicker: " << ticker << std::endl;
             std::cout << "Current Volatility (Updated): " << current_volatility << std::endl;
-            standard_ticker_vol_map[ticker] = current_volatility;
+            // standard_ticker_vol_map[ticker] = current_volatility;
 
         } else {
             std::cout << ticker << ": Not enough data" << std::endl;
@@ -121,7 +91,6 @@ std::map<std::string, double> true_volatility(std::map<std::string, std::vector<
 
     return true_volatility_output;
 };
-
 
 
 

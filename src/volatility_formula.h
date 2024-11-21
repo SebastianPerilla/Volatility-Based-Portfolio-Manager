@@ -4,6 +4,7 @@
 #include <numeric>
 #include <cmath>
 #include <iostream>
+#include <map>
 
 
 // Function that returns the logarithmic return for a given time period
@@ -78,34 +79,3 @@ double volatility_algorithm(std::vector<double>& stock_prices) {
         return vol;
 };
 
-
-struct Print_values {
-    void print_map(const std::map<std::string, double>& value) const {
-        for (const auto& pair : value) {
-            std::cout << pair.first << " " << pair.second << std::endl;
-        }
-    }
-
-    void print_vector(const std::vector<double>& value) const {
-        for (const auto& i : value) {
-            std::cout << i << std::endl;
-        }
-    }
-
-    void print_ticker_info(const std::string& ticker, double avg_return, const std::vector<double>& log_returns, double vol_algo) const {
-        std::cout << "\n Ticker: " << ticker << std::endl;
-        std::cout << " Average return: " << avg_return << std::endl;
-
-        std::cout << "\n Log Returns: " << std::endl;
-        std::cout << " Size: " << log_returns.size() << std::endl;
-
-        // Prints the log returns
-        for (auto& i : log_returns) {
-            std::cout << " " << (std::pow(i - avg_return, 2.0)) << "\n";
-        }
-
-        std::cout << std::endl;
-        std::cout << " Variances: " << iter_variance(log_returns, avg_return) << std::endl;
-        std::cout << " Volatility: " << vol_algo << std::endl;
-    }
-};
