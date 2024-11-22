@@ -10,7 +10,7 @@
 //Function with the main code testing each portion of the volatility calculation
 int main() {
 
-    std::map<std::string, std::vector<double>> standard_volatility = {
+    std::map<std::string, std::vector<long double>> standard_volatility = {
         {"NVDA", {100, 200, 300, 400, 500, 600, 220, 500, 200, 400, 700, 100, 900}},
         {"MSFT", {100, 200, 300, 400, 500, 600, 220, 500, 200, 400, 700, 100, 900}},
         {"TSLA", {100, 200, 300, 400, 500, 600, 220, 500, 200, 400, 700, 100, 900}},
@@ -21,12 +21,8 @@ int main() {
     };
 
 
-    std::map<std::string, double> output = ticker_to_vol_hourly(standard_volatility);
-    std::map<std::string, double> true_vol = true_volatility(standard_volatility, output);
-    
-    for (const auto& pair : true_vol) {
-        std::cout << "Ticker: " << pair.first << ", True Volatility: " << pair.second << std::endl;
-    }
+    std::map<std::string, long double> output = ticker_to_vol_hourly(standard_volatility);
+    std::map<std::string, long double> true_vol = true_volatility(standard_volatility, output);
 
     return 0;
 }
