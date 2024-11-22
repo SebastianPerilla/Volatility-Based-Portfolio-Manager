@@ -7,31 +7,6 @@
 #include <numeric>
 
 
-// // Dummy implementation of true_volatility for demonstration purposes
-// std::map<std::string, double> true_volatility(const std::map<std::string, std::vector<double>>& standard_volatility, const std::map<std::string, double>& output) {
-//     std::map<std::string, double> true_vol_map;
-
-//     for (const auto& pair : standard_volatility) {
-//         const std::string& ticker = pair.first;
-//         const std::vector<double>& prices = pair.second;
-
-//         if (prices.empty()) {
-//             true_vol_map[ticker] = 0.0;
-//             continue;
-//         }
-
-//         // Example calculation (replace with actual logic)
-//         double vol = output.at(ticker) * 1.1; // Just an example multiplier
-//         true_vol_map[ticker] = vol;
-
-//         // Debug print statements
-//         // std::cout << "Ticker: " << ticker << ", Volatility: " << vol << std::endl;
-//     }
-
-//     return true_vol_map;
-// }
-
-
 //Function with the main code testing each portion of the volatility calculation
 int main() {
 
