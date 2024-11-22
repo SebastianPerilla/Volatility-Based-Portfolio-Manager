@@ -36,14 +36,20 @@ There will be three main strategies:
 ## Mathematical Formulas + Examples
 
 
-### $Volatility = \sqrt{\frac{\sum_{i=1}^N (r_i - \bar{r})^2}{N-1}}$
+### $\text{Volatility}$ = $\sigma$ = $\sqrt{\frac{\sum_{i=1}^N (r_i - \bar{r})^2}{N-1}}$
 
 Where:
-- $sigma$: Volatility (standard deviation of returns)
+- $\sigma$: Volatility (standard deviation of returns)
 - $r_i$: Return of the stock in the \(i\)-th period
 - $\bar{r}$: Average return over the period
 - $N$: Number of periods
 
-## $r_i$ : Return of the stock over the period
+## Updating Volatility: Exponentially Weighted Moving Average (EWMA) 
 
-## $\bar{r}$ : Average Return of the stock over the period 
+### $\text{Updated Volatility}$ = $\sigma^2_t = (1 - \lambda) r^2_t + \lambda\sigma^2_{t-1}$
+
+Where: 
+- $\sigma^2_t$ : Updated Volatility
+- $\sigma^2_{t-1}$ : Previous Variance
+- $r^t = ln(\frac{P_{new}}{P_{old}})$ : is the log return
+- $\lambda$ : is the Decay Factor (Determines how much weight is given to recent returns versus historical volatility.)
