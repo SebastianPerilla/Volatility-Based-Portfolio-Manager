@@ -8,9 +8,9 @@ struct StockManagerResult {
     std::vector<std::string> selling_stocks;
     double reallocation_funds;
 };
-
-StockManagerResult StockManager(
-    const std::map<std::string, double>& stocks, 
+using Stock=std::map<std::string, long double>;
+StockManagerResult stockManager(
+    const Stock& stocks, 
     std::map<std::string, double>& my_portfolio, 
     const std::string& strategy) {
     

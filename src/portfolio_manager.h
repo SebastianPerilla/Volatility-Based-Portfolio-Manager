@@ -8,7 +8,7 @@ void portfolio_manager(
     double reallocation_funds,
     std::map<std::string, double>& my_portfolio,
     const std::string& strategy,
-    const std::map<std::string, double>& stocks) {
+    const std::map<std::string, long double>& stocks) {
     
     if (buying_stocks.empty() || reallocation_funds <= 0) {
         std::cout << "No funds to allocate or no stocks to buy.\n";

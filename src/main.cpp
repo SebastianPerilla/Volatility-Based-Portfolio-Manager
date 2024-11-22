@@ -2,6 +2,7 @@
 #include "portfolio_manager.h"
 #include "stock_manager.h"
 #include "volatility_parse.h"
+#include "extractor.h"
 #include <iostream>
 #include <cmath>
 #include <map>
@@ -13,13 +14,6 @@
 #include <limits>
 #include <algorithm>
 #include <cctype>
-#include <fstream>
-#include <sstream>
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
-#include <ctime>
-#include <iomanip> // For std::setprecision and std::fixed
-
 
 
 /* FUNCTION TO INITIALISE GAME AND VARIABLES initial_investment, strategy and months*/
@@ -75,128 +69,33 @@ std::tuple<float, int, std::string> startgame() {
 
     return std::make_tuple(initial_investment, months, strategy);
 }
+// Function to create the portfolio
+std::map<std::string, double> create_portfolio(const std::vector<std::string>& tickers, double initial_investment) {
+    std::map<std::string, double> my_portfolio;
+    if (tickers.empty()) {
+        std::cerr << "Error: No tickers provided.\n";
+        return my_portfolio;
+    }
+    double price_per_ticker = initial_investment / tickers.size();
+    for (const auto& ticker : tickers) {
+        my_portfolio[ticker] = price_per_ticker;
+    }
 
-
-
-//ISMAS
-using json = nlohmann::json;
-
-// Callback function for CURL to write response data
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
-    userp->append((char*)contents, size * nmemb);
-    return size * nmemb;
+    return my_portfolio;
 }
 
-// Convert dates to Unix timestamps
-long convert_to_timestamp(const std::string& date) {
-    std::tm tm = {};
-    std::istringstream ss(date);
-    ss >> std::get_time(&tm, "%Y-%m-%d");
-    return std::mktime(&tm);
+// Template function to print a map
+template <typename K, typename V>
+void print_map(const std::map<K, V>& m, const std::string& map_name = "Map") {
+    std::cout << map_name << ":\n";
+    for (const auto& pair : m) {
+        std::cout << "  " << pair.first << " : " << pair.second << "\n";
+    }
 }
-
-// Fetch stock data and store prices in a map
-void get_stock_data(const std::string& ticker, const std::string& start_date, const std::string& end_date, 
-                    std::map<std::string, std::vector<long double>>& ticker_to_prices) {
-    CURL* curl = curl_easy_init();
-    if (!curl) {
-        std::cerr << "Failed to initialize CURL" << std::endl;
-        return;
-    }
-
-    long period1 = convert_to_timestamp(start_date);
-    long period2 = convert_to_timestamp(end_date);
-
-    std::string url = "https://query1.finance.yahoo.com/v8/finance/chart/" + ticker +
-                      "?period1=" + std::to_string(period1) +
-                      "&period2=" + std::to_string(period2) +
-                      "&interval=1h";
-
-    struct curl_slist* headers = NULL;
-    headers = curl_slist_append(headers, "User-Agent: Mozilla/5.0");
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-    std::string response_data;
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
-
-    CURLcode res = curl_easy_perform(curl);
-    if (res != CURLE_OK) {
-        std::cerr << "Failed to fetch data: " << curl_easy_strerror(res) << std::endl;
-        curl_easy_cleanup(curl);
-        curl_slist_free_all(headers);
-        return;
-    }
-
-    try {
-        json data = json::parse(response_data);
-
-        if (!data["chart"]["result"][0]["timestamp"].is_null()) {
-            auto timestamps = data["chart"]["result"][0]["timestamp"];
-            auto prices = data["chart"]["result"][0]["indicators"]["quote"][0]["close"];
-
-            for (size_t i = 0; i < timestamps.size(); i++) {
-                if (!prices[i].is_null()) {
-                    ticker_to_prices[ticker].push_back(static_cast<long double>(prices[i]));
-                }
-            }
-
-            std::cout << "Data for " << ticker << " has been processed and stored." << std::endl;
-        }
-    } catch (const json::exception& e) {
-        std::cerr << "JSON error: " << e.what() << std::endl;
-    }
-
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
-}
-
-// Save data to a CSV file
-void save_to_csv(const std::string& filename, const std::map<std::string, std::vector<long double>>& ticker_to_prices) {
-    std::ofstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Failed to open file: " << filename << std::endl;
-        return;
-    }
-
-    file << "ticker,price\n";
-    file << std::fixed << std::setprecision(20); 
-    for (const auto& [ticker, prices] : ticker_to_prices) {
-        for (const auto& price : prices) {
-            file << ticker << "," << price << "\n";
-        }
-    }
-    file.close();
-
-    std::cout << "Data has been saved to " << filename << std::endl;
-}
-
-
-
-
-// Function to print a std::map
-void printMap(const std::map<std::string, double>& myMap, const std::string& title) {
-    std::cout << title << std::endl;
-    for (const auto& [key, value] : myMap) {
-        std::cout << key << ": " << value << std::endl;
-    }
-    std::cout << std::endl;
-}
-
 
 //Function with the main code testing each portion of the volatility calculation
 int main() {
-
-    std::map<std::string, std::vector<double>> standard_volatility = {
-        {"NVDA", {100, 200, 300, 400, 500, 600, 220, 500, 200, 400, 700, 100, 900}},
-        {"MSFT", {100, 200, 300, 400, 500, 600, 220, 500, 200, 400, 700, 100, 900}},
-        {"TSLA", {100, 200, 300, 400, 500, 600, 220, 500, 200, 400, 700, 100, 900}},
-        {"AAPL", {}},
-        {"GOOG", {}},
-        {"META", {}},
-        {"AVGO", {}},
-    };
+    /*
         std::map<std::string, double> my_portfolio = {
         {"AAPL", 10000},
         {"GOOGL", 15000},
@@ -209,6 +108,7 @@ int main() {
         {"ADBE", 13000},
         {"INTC", 12500}
     };
+    */
 
     //INIT GAME
     float initial_investment;
@@ -217,75 +117,88 @@ int main() {
     std::tie(initial_investment, months, strategy) = startgame();
     std::cout << "Investment: " << initial_investment << " Euros, Duration: " << months << " months, Strategy: " << strategy << std::endl;
     
-    //TEST
+    // GET PRICE PER HOUR
     // Map to store prices for each ticker
     std::map<std::string, std::vector<long double>> ticker_to_prices;
-
     // List of tickers
     std::vector<std::string> tickers = {
         "NVDA", "AAPL", "MSFT", "AMZN", "GOOGL",
         "META", "TSLA", "TSM", "AVGO", "ORCL"
     };
-
     // Fetch data for each ticker
     for (const auto& ticker : tickers) {
         get_stock_data(ticker, "2024-01-01", "2024-11-18", ticker_to_prices);
     }
+    // Determine the maximum number of hours
+    size_t max_hours = 0;
+    for (const auto& pair : ticker_to_prices) {
+        max_hours = std::max(max_hours, pair.second.size());
+    }
 
-    // Save data to a CSV file
-    save_to_csv("stock_data.csv", ticker_to_prices);
+    // Determine initial investment per stock
+    std::map<std::string,double> my_portfolio = create_portfolio(tickers, initial_investment);
+    print_map(my_portfolio, "My Portfolio");
 
-    // Print the ticker-to-prices mapping
-    std::cout << std::fixed << std::setprecision(20);
-    for (const auto& [ticker, prices] : ticker_to_prices) {
-        std::cout << "Ticker: " << ticker << "\nPrices: ";
-        for (const auto& price : prices) {
-            std::cout << price << " ";
+    // START THE FOR LOOP HERE
+    // Loop through each hour and create the hourly map
+    for (size_t hour = 7; hour < max_hours; ++hour) {
+        std::map<std::string, long double> hourly_map;
+        for (const auto& pair : ticker_to_prices) {
+            const std::string& ticker = pair.first;
+            const std::vector<long double>& prices = pair.second;
+            if (hour < prices.size()) {
+                hourly_map[ticker] = prices[hour];
+            }
         }
-        std::cout << "\n";
-    }
+        print_map(hourly_map, "My hourly_map");
 
+        // GET VOLATILITY MAP
+        std::map<std::string, long double> output = ticker_to_vol_hourly(ticker_to_prices);
+        std::map<std::string, long double> true_vol = true_volatility(ticker_to_prices, output);
+        std::cout << "Volatility map: " << std::endl;
+        for (const auto& pair : true_vol) {
+            std::cout << pair.first << " : " << pair.second << std::endl;
+        }
 
-    // GET VOLATILITY MAP
-    std::map<std::string, double> output = ticker_to_vol_hourly(standard_volatility);
-    std::map<std::string, double> true_vol = true_volatility(standard_volatility, output);
+        // Call the function
+        StockManagerResult result = StockManager(true_vol, my_portfolio, strategy);
 
-    // Print the maps
-    printMap(output, "Hourly Volatility:");
-    printMap(true_vol, "True Volatility:");
+        // Output results from StockManager
+        std::cout << "Buying stocks:\n";
+        if (result.buying_stocks.empty()) {
+            std::cout << "No stocks to buy.\n";
+        } else {
+            for (const auto& stock : result.buying_stocks) {
+                std::cout << "- " << stock << "\n";
+            }
+        }
 
-    // Call the function
-    StockManagerResult result = StockManager(true_vol, my_portfolio, strategy);
+        std::cout << "\nSelling stocks:\n";
+        if (result.selling_stocks.empty()) {
+            std::cout << "No stocks to sell.\n";
+        } else {
+            for (const auto& stock : result.selling_stocks) {
+                std::cout << "- " << stock << "\n";
+            }
+        }
 
-    // Output results from StockManager
-    std::cout << "Buying stocks:\n";
-    if (result.buying_stocks.empty()) {
-        std::cout << "No stocks to buy.\n";
-    } else {
-        for (const auto& stock : result.buying_stocks) {
-            std::cout << "- " << stock << "\n";
+        std::cout << "\nReallocation funds: $" << result.reallocation_funds << "\n";
+
+        // Allocate reallocation funds using portfolio_manager
+        portfolio_manager(result.buying_stocks, result.reallocation_funds, my_portfolio, strategy, true_vol);
+
+        // Output the final portfolio after allocation
+        std::cout << "\nFinal portfolio:\n";
+        for (const auto& [stock, value] : my_portfolio) {
+            std::cout << stock << ": $" << value << "\n";
         }
     }
-
-    std::cout << "\nSelling stocks:\n";
-    if (result.selling_stocks.empty()) {
-        std::cout << "No stocks to sell.\n";
-    } else {
-        for (const auto& stock : result.selling_stocks) {
-            std::cout << "- " << stock << "\n";
-        }
+    // Inline loop to print the portfolio
+    std::cout << "My Portfolio:\n";
+    for (const auto& pair : my_portfolio) {
+        std::cout << "  " << pair.first << " : " << pair.second << "\n";
     }
-
-    std::cout << "\nReallocation funds: $" << result.reallocation_funds << "\n";
-
-    // Allocate reallocation funds using portfolio_manager
-    portfolio_manager(result.buying_stocks, result.reallocation_funds, my_portfolio, strategy, true_vol);
-
-    // Output the final portfolio after allocation
-    std::cout << "\nFinal portfolio:\n";
-    for (const auto& [stock, value] : my_portfolio) {
-        std::cout << stock << ": $" << value << "\n";
-    }
+    std::cout << "-----------------------------------\n";
 
     return 0;
 }
