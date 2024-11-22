@@ -11,7 +11,7 @@
 std::vector<double> logarithmic_return_function(std::vector<double>& price) {
     std::vector<double> r_t_list;
     
-    // Using a regular iterator
+    // Using a regular iterator to loop through all the initial prices
     for (std::vector<double>::iterator it = price.begin(); it != price.end()-1; ++it) {
         double r_t = log(*(it + 1) / *it);
         r_t_list.push_back(r_t);

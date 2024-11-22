@@ -23,6 +23,10 @@ int main() {
 
     std::map<std::string, double> output = ticker_to_vol_hourly(standard_volatility);
     std::map<std::string, double> true_vol = true_volatility(standard_volatility, output);
+    
+    for (const auto& pair : true_vol) {
+        std::cout << "Ticker: " << pair.first << ", True Volatility: " << pair.second << std::endl;
+    }
 
     return 0;
 }

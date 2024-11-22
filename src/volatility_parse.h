@@ -1,5 +1,3 @@
-#pragma once
-
 #include "volatility_formula.h"
 #include <iostream>
 #include <map>
@@ -57,7 +55,6 @@ std::map<std::string, long double> ticker_to_vol_hourly(std::map<std::string, st
     return ticker_vol_map;
 }
 
-
 std::map<std::string, long double> true_volatility(std::map<std::string, std::vector<long double>> input_map, std::map<std::string, long double> standard_ticker_vol_map){
     
     std::cout << "\n-----------------------------------\n";
@@ -75,15 +72,11 @@ std::map<std::string, long double> true_volatility(std::map<std::string, std::ve
             for (size_t i = 5; i < prices.size()-1; ++i) {
                 long double old_price = prices[i];
                 long double new_price = prices[i + 1];
+
                 current_volatility = update_volatility(current_volatility, new_price, old_price, lambda);
-            //     std::cout << "\nTicker: " << ticker << std::endl;
-            // std::cout << "Current Volatility (Updated): " << current_volatility << std::endl;
             }
 
-            std::cout << "\nTicker: " << ticker << std::endl;
-            std::cout << "Current Volatility (Updated): " << current_volatility << std::endl;
-            // standard_ticker_vol_map[ticker] = current_volatility;
-
+            true_volatility_output[ticker] = current_volatility;
         } else {
             std::cout << ticker << ": Not enough data" << std::endl;
         }
