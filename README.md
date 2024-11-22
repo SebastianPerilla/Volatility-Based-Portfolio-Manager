@@ -4,7 +4,7 @@
 
 ![alt text](readme_images/image.png)
 
-## Steps
+# Steps
 
 1. Intro
     1. User is asked about how much money he wants to invest into the selection of stocks
@@ -33,7 +33,7 @@ There will be three main strategies:
 - Optimistic: Approach sells less often when the volatility is higher
 
 
-## Mathematical Formulas + Examples
+# Mathematical Formulas + Examples
 
 
 ### $\text{Volatility}$ = $\sigma$ = $\sqrt{\frac{\sum_{i=1}^N (r_i - \bar{r})^2}{N-1}}$
