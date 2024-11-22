@@ -1,5 +1,3 @@
-#pragma once
-
 #include "volatility_formula.h"
 #include <iostream>
 #include <map>
@@ -58,32 +56,27 @@ std::map<std::string, double> ticker_to_vol_hourly(std::map<std::string, std::ve
 }
 
 
-std::map<std::string, double> true_volatility(std::map<std::string, std::vector<double>> input_map, std::map<std::string, double> standard_ticker_vol_map){
-    
+// Definition of the true_volatility function
+std::map<std::string, double> true_volatility(const std::map<std::string, std::vector<double>>& input_map, const std::map<std::string, double>& standard_ticker_vol_map) {
     std::cout << "\n-----------------------------------\n";
 
     std::map<std::string, double> true_volatility_output;
-            
+
     for (const auto& pair : standard_ticker_vol_map) {
         const std::string& ticker = pair.first;
-        const std::vector<double>& prices = input_map[ticker];
+        const std::vector<double>& prices = input_map.at(ticker);
 
         if (prices.size() > 6) {
             double current_volatility = pair.second;
             double lambda = 0.94;
 
-            for (size_t i = 5; i < prices.size()-1; ++i) {
+            for (size_t i = 5; i < prices.size() - 1; ++i) {
                 double old_price = prices[i];
                 double new_price = prices[i + 1];
                 current_volatility = update_volatility(current_volatility, new_price, old_price, lambda);
-            //     std::cout << "\nTicker: " << ticker << std::endl;
-            // std::cout << "Current Volatility (Updated): " << current_volatility << std::endl;
             }
 
-            std::cout << "\nTicker: " << ticker << std::endl;
-            std::cout << "Current Volatility (Updated): " << current_volatility << std::endl;
-            // standard_ticker_vol_map[ticker] = current_volatility;
-
+            true_volatility_output[ticker] = current_volatility;
         } else {
             std::cout << ticker << ": Not enough data" << std::endl;
         }
