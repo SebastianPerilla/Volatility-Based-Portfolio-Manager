@@ -30,7 +30,7 @@ long convert_to_timestamp(const std::string& date) {
 
 // Fetch stock data and store prices in a map
 void get_stock_data(const std::string& ticker, const std::string& start_date, const std::string& end_date, 
-                    std::map<std::string, std::vector<long double>>& ticker_to_prices) {
+                    std::map<std::string, std::vector<double>>& ticker_to_prices) {
     CURL* curl = curl_easy_init();
     if (!curl) {
         std::cerr << "Failed to initialize CURL" << std::endl;
@@ -71,7 +71,7 @@ void get_stock_data(const std::string& ticker, const std::string& start_date, co
 
             for (size_t i = 0; i < timestamps.size(); i++) {
                 if (!prices[i].is_null()) {
-                    ticker_to_prices[ticker].push_back(static_cast<long double>(prices[i]));
+                    ticker_to_prices[ticker].push_back(static_cast<double>(prices[i]));
                 }
             }
 
@@ -86,7 +86,7 @@ void get_stock_data(const std::string& ticker, const std::string& start_date, co
 }
 
 // Save data to a CSV file
-void save_to_csv(const std::string& filename, const std::map<std::string, std::vector<long double>>& ticker_to_prices) {
+void save_to_csv(const std::string& filename, const std::map<std::string, std::vector<double>>& ticker_to_prices) {
     std::ofstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Failed to open file: " << filename << std::endl;

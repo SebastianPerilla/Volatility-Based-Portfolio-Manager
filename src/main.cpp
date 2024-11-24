@@ -95,21 +95,6 @@ void print_map(const std::map<K, V>& m, const std::string& map_name = "Map") {
 
 //Function with the main code testing each portion of the volatility calculation
 int main() {
-    /*
-        std::map<std::string, double> my_portfolio = {
-        {"AAPL", 10000},
-        {"GOOGL", 15000},
-        {"MSFT", 20000},
-        {"AMZN", 12000},
-        {"TSLA", 18000},
-        {"META", 14000},
-        {"NFLX", 16000},
-        {"NVDA", 11000},
-        {"ADBE", 13000},
-        {"INTC", 12500}
-    };
-    */
-
     //INIT GAME
     float initial_investment;
     int months;
@@ -117,88 +102,137 @@ int main() {
     std::tie(initial_investment, months, strategy) = startgame();
     std::cout << "Investment: " << initial_investment << " Euros, Duration: " << months << " months, Strategy: " << strategy << std::endl;
     
-    // GET PRICE PER HOUR
+    // GET PRICE PER HOUR -ISMA
     // Map to store prices for each ticker
-    std::map<std::string, std::vector<long double>> ticker_to_prices;
-    // List of tickers
+    std::map<std::string, std::vector<double>> ticker_to_prices;
     std::vector<std::string> tickers = {
         "NVDA", "AAPL", "MSFT", "AMZN", "GOOGL",
         "META", "TSLA", "TSM", "AVGO", "ORCL"
     };
-    // Fetch data for each ticker
     for (const auto& ticker : tickers) {
         get_stock_data(ticker, "2024-01-01", "2024-11-18", ticker_to_prices);
     }
-    // Determine the maximum number of hours
-    size_t max_hours = 0;
-    for (const auto& pair : ticker_to_prices) {
-        max_hours = std::max(max_hours, pair.second.size());
-    }
 
+    // GET PORTFOLIO
     // Determine initial investment per stock
     std::map<std::string,double> my_portfolio = create_portfolio(tickers, initial_investment);
-    print_map(my_portfolio, "My Portfolio");
 
-    // START THE FOR LOOP HERE
-    // Loop through each hour and create the hourly map
-    for (size_t hour = 7; hour < max_hours; ++hour) {
-        std::map<std::string, long double> hourly_map;
-        for (const auto& pair : ticker_to_prices) {
-            const std::string& ticker = pair.first;
-            const std::vector<long double>& prices = pair.second;
-            if (hour < prices.size()) {
-                hourly_map[ticker] = prices[hour];
-            }
-        }
-        print_map(hourly_map, "My hourly_map");
-
-        // GET VOLATILITY MAP
-        std::map<std::string, long double> output = ticker_to_vol_hourly(ticker_to_prices);
-        std::map<std::string, long double> true_vol = true_volatility(ticker_to_prices, output);
-        std::cout << "Volatility map: " << std::endl;
-        for (const auto& pair : true_vol) {
-            std::cout << pair.first << " : " << pair.second << std::endl;
-        }
-
-        // Call the function
-        StockManagerResult result = StockManager(true_vol, my_portfolio, strategy);
-
-        // Output results from StockManager
-        std::cout << "Buying stocks:\n";
-        if (result.buying_stocks.empty()) {
-            std::cout << "No stocks to buy.\n";
-        } else {
-            for (const auto& stock : result.buying_stocks) {
-                std::cout << "- " << stock << "\n";
-            }
-        }
-
-        std::cout << "\nSelling stocks:\n";
-        if (result.selling_stocks.empty()) {
-            std::cout << "No stocks to sell.\n";
-        } else {
-            for (const auto& stock : result.selling_stocks) {
-                std::cout << "- " << stock << "\n";
-            }
-        }
-
-        std::cout << "\nReallocation funds: $" << result.reallocation_funds << "\n";
-
-        // Allocate reallocation funds using portfolio_manager
-        portfolio_manager(result.buying_stocks, result.reallocation_funds, my_portfolio, strategy, true_vol);
-
-        // Output the final portfolio after allocation
-        std::cout << "\nFinal portfolio:\n";
-        for (const auto& [stock, value] : my_portfolio) {
-            std::cout << stock << ": $" << value << "\n";
-        }
+    /*
+    // GET VOLATILITY MAP
+    std::map<std::string, double> output = ticker_to_vol_hourly(ticker_to_prices);
+    std::map<std::string, double> true_vol = true_volatility(ticker_to_prices, output);
+    std::cout << "Volatility map: " << std::endl;
+    for (const auto& pair : true_vol) {
+        std::cout << pair.first << " : " << pair.second << std::endl;
     }
-    // Inline loop to print the portfolio
-    std::cout << "My Portfolio:\n";
-    for (const auto& pair : my_portfolio) {
-        std::cout << "  " << pair.first << " : " << pair.second << "\n";
-    }
-    std::cout << "-----------------------------------\n";
+    */
 
-    return 0;
+    //THIS WILL BE THE OUTPUT FROM SEBAS' VOLATILITY CODE
+    std::map<std::string, std::vector<double>> stocks = {
+        {"AAPL", {0.002, 0.0025, 0.003, 0.0018}},
+        {"GOOGL", {0.006, 0.0055, 0.0062, 0.006}},
+        {"MSFT", {0.005, 0.0052, 0.0048, 0.005}},
+        {"AMZN", {0.001, 0.0011, 0.0012, 0.0009}},
+        {"TSLA", {0.007, 0.0075, 0.0068, 0.0071}}
+    };
+
+
+    // Calculate percentage changes
+    std::map<std::string, std::vector<double>> ticker_to_percentage_changes =
+        calculate_percentage_changes(ticker_to_prices);
+
+    // Print the initial portfolio
+    std::cout << "Initial Portfolio:\n";
+    for (const auto& [stock, value] : my_portfolio) {
+        std::cout << stock << ": $" << value << "\n";
+    }
+    std::cout << "--------------------------\n";
+
+    // Call stockManager and get results
+    StockManagerResult stock_result = stockManager(stocks, my_portfolio, strategy);
+
+    // Call portfolio_manager and get results
+    PortfolioManagerResult portfolio_result = portfolio_manager(
+        stock_result.buying_stocks,
+        stock_result.reallocation_funds,
+        my_portfolio,
+        strategy,
+        stocks,
+        ticker_to_percentage_changes
+    );
+
+    // PRINTING RESULTS/PLOT
+    // Print combined results for each hour
+    size_t hours = stock_result.buying_stocks.size();
+    for (size_t hour = 0; hour < hours; ++hour) {
+        std::cout << "Hour " << hour + 1 << " Results:\n";
+
+        // Print the percentage changes for each stock
+        std::cout << "  Stock Price Changes:\n";
+        for (const auto& [stock, percentage_changes] : ticker_to_percentage_changes) {
+            double percentage_change = 0.0;
+            if (hour < percentage_changes.size()) {
+                percentage_change = percentage_changes[hour];
+                std::cout << "    " << stock << ": ";
+                if (percentage_change >= 0) {
+                    std::cout << "+";
+                }
+                std::cout << percentage_change << "%\n";
+            } else {
+                // If no data for this hour, assume no change
+                std::cout << "    " << stock << ": No data\n";
+            }
+        }
+
+        // Stock Manager Results
+        std::cout << "  Stock Manager Decisions:\n";
+        std::cout << "    Buying: ";
+        for (const auto& stock : stock_result.buying_stocks[hour]) {
+            std::cout << stock << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "    Selling: ";
+        for (const auto& stock : stock_result.selling_stocks[hour]) {
+            std::cout << stock << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "    Funds Available for Reallocation: $" << stock_result.reallocation_funds[hour] << "\n";
+
+        // Portfolio Manager Results
+        std::cout << "  How much we bought:\n";
+        if (hour < portfolio_result.allocations.size() && !portfolio_result.allocations[hour].empty()) {
+            for (const auto& [stock, allocated_funds] : portfolio_result.allocations[hour]) {
+                std::cout << "    - " << stock << ": $" << allocated_funds << "\n";
+            }
+        } else {
+            std::cout << "    No funds allocated this hour.\n";
+        }
+
+                // Print the updated portfolio at the start of the hour
+        std::cout << "  Your Portfolio at the end of this hour:\n";
+        // Use the stored portfolio values for this hour
+        if (hour < portfolio_result.portfolio_values.size()) {
+            const auto& portfolio_at_hour = portfolio_result.portfolio_values[hour];
+            for (const auto& [stock, value] : portfolio_at_hour) {
+                std::cout << "    " << stock << ": $" << value << "\n";
+            }
+        } else {
+            // If for some reason we don't have portfolio values for this hour, print current my_portfolio
+            for (const auto& [stock, value] : my_portfolio) {
+                std::cout << "    " << stock << ": $" << value << "\n";
+            }
+        }
+        std::cout << "--------------------------\n";
+
+    }
+
+    // Print final portfolio
+    std::cout << "\nYour Final Portfolio:\n";
+    for (const auto& [stock, value] : my_portfolio) {
+        std::cout << stock << ": $" << value << "\n";
+    }
+
+    return 0;  
 }
