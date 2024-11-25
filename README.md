@@ -110,6 +110,7 @@ There will be three main strategies:
 - Neutral: Approach sells and buys an equal amount given a normal range of volatility
 - Optimistic: Approach sells less often when the volatility is higher
 
+---
 
 # Mathematical Formulas + Examples
 
