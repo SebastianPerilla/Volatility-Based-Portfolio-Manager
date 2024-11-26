@@ -55,11 +55,11 @@ std::map<std::string, long double> ticker_to_vol_hourly(std::map<std::string, st
     return ticker_vol_map;
 }
 
-std::map<std::string, long double> true_volatility(std::map<std::string, std::vector<long double>> input_map, std::map<std::string, long double> standard_ticker_vol_map){
+std::map<std::string, std::vector<long double>> true_volatility(std::map<std::string, std::vector<long double>> input_map, std::map<std::string, long double> standard_ticker_vol_map){
     
     std::cout << "\n-----------------------------------\n";
 
-    std::map<std::string, long double> true_volatility_output;
+    std::map<std::string, std::vector<long double>> true_volatility_output;
             
     for (const auto& pair : standard_ticker_vol_map) {
         const std::string& ticker = pair.first;
@@ -74,9 +74,10 @@ std::map<std::string, long double> true_volatility(std::map<std::string, std::ve
                 long double new_price = prices[i + 1];
 
                 current_volatility = update_volatility(current_volatility, new_price, old_price, lambda);
+                
+                // std::cout << current_volatility << std::endl;
+                true_volatility_output[ticker].push_back(current_volatility);
             }
-
-            true_volatility_output[ticker] = current_volatility;
         } else {
             std::cout << ticker << ": Not enough data" << std::endl;
         }
