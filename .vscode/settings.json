@@ -83,6 +83,11 @@
         "span": "cpp",
         "stack": "cpp",
         "unordered_set": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "chrono": "cpp",
+        "codecvt": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp",
+        "semaphore": "cpp"
     }
 }
