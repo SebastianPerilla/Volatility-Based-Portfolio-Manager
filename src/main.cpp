@@ -14,6 +14,8 @@
 #include <limits>
 #include <algorithm>
 #include <cctype>
+//#include <matplot/matplot.h>
+
 
 
 /* FUNCTION TO INITIALISE GAME AND VARIABLES initial_investment, strategy and months*/
@@ -93,7 +95,41 @@ void print_map(const std::map<K, V>& m, const std::string& map_name = "Map") {
     }
 }
 
-//Function with the main code testing each portion of the volatility calculation
+/*
+void plot_portfolio_values(const std::vector<std::map<std::string, double>>& portfolio_values) {
+    using namespace matplot;
+
+    // Prepare time-series data for each stock
+    std::map<std::string, std::vector<double>> stock_time_series;
+
+    for (size_t hour = 0; hour < portfolio_values.size(); ++hour) {
+        const auto& hourly_portfolio = portfolio_values[hour];
+        for (const auto& [stock, value] : hourly_portfolio) {
+            stock_time_series[stock].push_back(value);
+        }
+    }
+
+    // Generate x-axis (hours)
+    std::vector<double> hours(portfolio_values.size());
+    std::iota(hours.begin(), hours.end(), 0); // Fill with values 0, 1, 2, ..., n-1
+
+    // Plot each stock's time series
+    std::vector<std::string> stock_labels; // Store stock names for the legend
+    for (const auto& [stock, values] : stock_time_series) {
+        plot(hours, values);  // Add a line for each stock
+        stock_labels.push_back(stock);
+    }
+
+    // Configure the plot
+    title("Portfolio Evolution Over Time");
+    xlabel("Hour");
+    ylabel("Portfolio Value ($)");
+    legend(stock_labels);  // Add the stock names as labels in the legend
+    grid(true);
+    show();    // Display the plot
+}
+*/
+
 int main() {
     //INIT GAME
     float initial_investment;
@@ -117,25 +153,22 @@ int main() {
     // Determine initial investment per stock
     std::map<std::string,double> my_portfolio = create_portfolio(tickers, initial_investment);
 
-    /*
+
     // GET VOLATILITY MAP
     std::map<std::string, double> output = ticker_to_vol_hourly(ticker_to_prices);
-    std::map<std::string, double> true_vol = true_volatility(ticker_to_prices, output);
-    std::cout << "Volatility map: " << std::endl;
+    std::map<std::string, std::vector<double>> true_vol = true_volatility(ticker_to_prices, output);
+    /*
     for (const auto& pair : true_vol) {
-        std::cout << pair.first << " : " << pair.second << std::endl;
+        const std::string& ticker = pair.first;
+        const std::vector<double>& prices = pair.second;
+
+        std::cout << "\n Ticker: " << ticker << std::endl;
+        std::cout << " Hourly Volatilities: " << std::endl;
+        for (auto& i : prices) {
+            std::cout << " " << i << "\n";
+        }
     }
     */
-
-    //THIS WILL BE THE OUTPUT FROM SEBAS' VOLATILITY CODE
-    std::map<std::string, std::vector<double>> stocks = {
-        {"AAPL", {0.002, 0.0025, 0.003, 0.0018}},
-        {"GOOGL", {0.006, 0.0055, 0.0062, 0.006}},
-        {"MSFT", {0.005, 0.0052, 0.0048, 0.005}},
-        {"AMZN", {0.001, 0.0011, 0.0012, 0.0009}},
-        {"TSLA", {0.007, 0.0075, 0.0068, 0.0071}}
-    };
-
 
     // Calculate percentage changes
     std::map<std::string, std::vector<double>> ticker_to_percentage_changes =
@@ -149,7 +182,7 @@ int main() {
     std::cout << "--------------------------\n";
 
     // Call stockManager and get results
-    StockManagerResult stock_result = stockManager(stocks, my_portfolio, strategy);
+    StockManagerResult stock_result = stockManager(true_vol, my_portfolio, strategy);
 
     // Call portfolio_manager and get results
     PortfolioManagerResult portfolio_result = portfolio_manager(
@@ -157,7 +190,7 @@ int main() {
         stock_result.reallocation_funds,
         my_portfolio,
         strategy,
-        stocks,
+        true_vol,
         ticker_to_percentage_changes
     );
 
@@ -225,7 +258,6 @@ int main() {
             }
         }
         std::cout << "--------------------------\n";
-
     }
 
     // Print final portfolio
@@ -233,6 +265,18 @@ int main() {
     for (const auto& [stock, value] : my_portfolio) {
         std::cout << stock << ": $" << value << "\n";
     }
+
+
+    std::vector<std::map<std::string, double>> portfolio_values = {
+    {{"AAPL", 1050.0}, {"GOOGL", 1500.0}, {"MSFT", 2000.0}},
+    {{"AAPL", 1100.0}, {"GOOGL", 1600.0}, {"MSFT", 2100.0}},
+    {{"AAPL", 1200.0}, {"GOOGL", 1700.0}, {"MSFT", 2200.0}},
+    {{"AAPL", 1250.0}, {"GOOGL", 1800.0}, {"MSFT", 2300.0}}
+    };
+
+    // plot_portfolio_values(portfolio_values);
+
+
 
     return 0;  
 }
