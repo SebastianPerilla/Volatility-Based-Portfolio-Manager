@@ -135,7 +135,10 @@ int main() {
     float initial_investment;
     int months;
     std::string strategy;
-    std::tie(initial_investment, months, strategy) = startgame();
+    initial_investment = 20000;
+    months = 12;
+    strategy = "Neutral";
+    // std::tie(initial_investment, months, strategy) = startgame();
     std::cout << "Investment: " << initial_investment << " Euros, Duration: " << months << " months, Strategy: " << strategy << std::endl;
     
     // GET PRICE PER HOUR -ISMA
@@ -157,7 +160,7 @@ int main() {
     // GET VOLATILITY MAP
     std::map<std::string, double> output = ticker_to_vol_hourly(ticker_to_prices);
     std::map<std::string, std::vector<double>> true_vol = true_volatility(ticker_to_prices, output);
-    /*
+    
     for (const auto& pair : true_vol) {
         const std::string& ticker = pair.first;
         const std::vector<double>& prices = pair.second;
@@ -168,8 +171,7 @@ int main() {
             std::cout << " " << i << "\n";
         }
     }
-    */
-
+    
     // Calculate percentage changes
     std::map<std::string, std::vector<double>> ticker_to_percentage_changes =
         calculate_percentage_changes(ticker_to_prices);
