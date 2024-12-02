@@ -10,12 +10,10 @@
 #include <ctime>
 #include <iomanip> // For std::setprecision and std::fixed
 
-
-//ISMAS
 using json = nlohmann::json;
 
 // Callback function for CURL to write response data
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
+size_t write_call_back(void* contents, size_t size, size_t nmemb, std::string* userp) {
     userp->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
@@ -51,7 +49,7 @@ void get_stock_data(const std::string& ticker, const std::string& start_date, co
 
     std::string response_data;
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_call_back);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
 
     CURLcode res = curl_easy_perform(curl);
@@ -104,8 +102,6 @@ void save_to_csv(const std::string& filename, const std::map<std::string, std::v
 
     std::cout << "Data has been saved to " << filename << std::endl;
 }
-
-
 
 
 // Function to print a std::map

@@ -28,6 +28,7 @@ std::map<std::string, std::vector<double>> calculate_percentage_changes(
                 percentage_changes.push_back(0.0); // No change if previous price is zero
             }
         }
+        
 
         // Add this ticker's percentage changes to the map
         ticker_to_percentage_changes[ticker] = percentage_changes;
@@ -38,7 +39,7 @@ std::map<std::string, std::vector<double>> calculate_percentage_changes(
 
 
 // Define this struct in the same file or include it via a header file.
-struct StockManagerResult {
+struct Stock_Manager_Result {
     std::vector<std::vector<std::string>> buying_stocks;   // List of stocks to buy at each hour
     std::vector<std::vector<std::string>> selling_stocks;  // List of stocks to sell at each hour
     std::vector<double> reallocation_funds;                // Funds freed up at each hour
@@ -46,12 +47,12 @@ struct StockManagerResult {
 
 
 
-StockManagerResult stockManager(
+Stock_Manager_Result stock_manager(
     const std::map<std::string, std::vector<double>>& stocks,
     std::map<std::string, double>& my_portfolio,
     const std::string& strategy) {
     
-    StockManagerResult result;
+    Stock_Manager_Result result;
 
     // Determine the maximum number of hours based on any stock's volatility vector
     size_t max_hours = 0;
@@ -71,31 +72,50 @@ StockManagerResult stockManager(
 
             // Get the volatility for the current hour, defaulting to the last value if out of bounds
             double avg_volatility = hour < volatility_values.size() ? volatility_values[hour] : volatility_values.back();
+            std::cout << avg_volatility << std::endl;
 
-            // Adjustments based on the strategy and average volatility
-            if (strategy == "optimistic") {                                    //MAYE WE WILL HAVE TO UPDATE THE PERCENTAGES BASED ON THE OUPUTES WE OBSERVE FROM THE VOLATILITY CODE
-                if (avg_volatility <= 0.003) {
-                    buying_stocks_hour.push_back(stock); // Strong buy
-                } else {
-                    buying_stocks_hour.push_back(stock); // Small buy
+                // Adjustments based on the strategy and average volatility
+                if (strategy == "optimistic") {
+                    // "Optimistic" strategy focuses on more buying opportunities, even at higher volatility.
+                    if (avg_volatility <= 0.0025) {
+                        buying_stocks_hour.push_back(stock); // Strong buy
+                    } else if (avg_volatility <= 0.004) {
+                        buying_stocks_hour.push_back(stock); // Moderate buy
+                    } else {
+                        // Very high volatility; sell a portion of the stock to free up funds
+                        adjustment = -invested_money * 0.05; // Light sell
+                        reallocation_funds_hour -= adjustment; // Add funds
+                        selling_stocks_hour.push_back(stock);
+                    }
+                } else if (strategy == "neutral") {
+                    // "Neutral" strategy balances between buying and selling.
+                    if (avg_volatility > 0.004) {
+                        adjustment = -invested_money * 0.03; // Light sell for higher volatility
+                        reallocation_funds_hour -= adjustment; // Free up funds
+                        selling_stocks_hour.push_back(stock);
+                    } else if (avg_volatility > 0.003) {
+                        // Moderate volatility; no action or slight buy
+                        buying_stocks_hour.push_back(stock);
+                    } else {
+                        // Low volatility; slight buy
+                        buying_stocks_hour.push_back(stock);
+                    }
+                } else if (strategy == "conservative") {
+                    // "Conservative" strategy is cautious about high volatility.
+                    if (avg_volatility > 0.004) {
+                        adjustment = -invested_money * 0.1; // Strong sell for very high volatility
+                        reallocation_funds_hour -= adjustment; // Free up significant funds
+                        selling_stocks_hour.push_back(stock);
+                    } else if (avg_volatility > 0.0035) {
+                        adjustment = -invested_money * 0.05; // Moderate sell
+                        reallocation_funds_hour -= adjustment;
+                        selling_stocks_hour.push_back(stock);
+                    } else {
+                        // Low volatility; slight buy
+                        buying_stocks_hour.push_back(stock);
+                    }
                 }
-            } else if (strategy == "neutral") {
-                if (avg_volatility > 0.005) {
-                    adjustment = -invested_money * 0.05; // Moderate sell
-                    reallocation_funds_hour -= adjustment; // Add positive funds
-                    selling_stocks_hour.push_back(stock);
-                } else {
-                    buying_stocks_hour.push_back(stock); // Slight buy
-                }
-            } else if (strategy == "conservative") {
-                if (avg_volatility > 0.005) {
-                    adjustment = -invested_money * 0.1; // Strong sell
-                    reallocation_funds_hour -= adjustment; // Add positive funds
-                    selling_stocks_hour.push_back(stock);
-                } else {
-                    buying_stocks_hour.push_back(stock); // Slight buy
-                }
-            }
+                
 
             // Update the portfolio based on adjustment
             invested_money += adjustment;

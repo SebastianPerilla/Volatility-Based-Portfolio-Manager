@@ -9,17 +9,15 @@
 #include <vector>
 #include <numeric>
 #include <string>
-#include <utility> // For std::pair
+#include <utility>
 #include <tuple>
 #include <limits>
 #include <algorithm>
 #include <cctype>
-//#include <matplot/matplot.h>
-
 
 
 /* FUNCTION TO INITIALISE GAME AND VARIABLES initial_investment, strategy and months*/
-std::tuple<float, int, std::string> startgame() {
+std::tuple<float, int, std::string> start_game() {
     std::cout << "Welcome to Stock Shock. Today is 1st of January of 2023. Let's test your investment skills.\n";
     std::cout << "You will have a series of decisions to make which will affect how your money behaves, so choose wisely!\n";
 
@@ -135,12 +133,8 @@ int main() {
     float initial_investment;
     int months;
     std::string strategy;
-    initial_investment = 20000;
-    months = 12;
-    strategy = "Neutral";
-    // std::tie(initial_investment, months, strategy) = startgame();
-    std::cout << "Investment: " << initial_investment << " Euros, Duration: " << months << " months, Strategy: " << strategy << std::endl;
-    
+    std::tie(initial_investment, months, strategy) = start_game();
+
     // GET PRICE PER HOUR -ISMA
     // Map to store prices for each ticker
     std::map<std::string, std::vector<double>> ticker_to_prices;
@@ -161,17 +155,6 @@ int main() {
     std::map<std::string, double> output = ticker_to_vol_hourly(ticker_to_prices);
     std::map<std::string, std::vector<double>> true_vol = true_volatility(ticker_to_prices, output);
     
-    for (const auto& pair : true_vol) {
-        const std::string& ticker = pair.first;
-        const std::vector<double>& prices = pair.second;
-
-        std::cout << "\n Ticker: " << ticker << std::endl;
-        std::cout << " Hourly Volatilities: " << std::endl;
-        for (auto& i : prices) {
-            std::cout << " " << i << "\n";
-        }
-    }
-    
     // Calculate percentage changes
     std::map<std::string, std::vector<double>> ticker_to_percentage_changes =
         calculate_percentage_changes(ticker_to_prices);
@@ -183,11 +166,11 @@ int main() {
     }
     std::cout << "--------------------------\n";
 
-    // Call stockManager and get results
-    StockManagerResult stock_result = stockManager(true_vol, my_portfolio, strategy);
+    // Call Stock_Manager_Result and get results
+    Stock_Manager_Result stock_result = stock_manager(true_vol, my_portfolio, strategy);
 
     // Call portfolio_manager and get results
-    PortfolioManagerResult portfolio_result = portfolio_manager(
+    Portfolio_Manager_Result portfolio_result = portfolio_manager(
         stock_result.buying_stocks,
         stock_result.reallocation_funds,
         my_portfolio,
@@ -267,18 +250,6 @@ int main() {
     for (const auto& [stock, value] : my_portfolio) {
         std::cout << stock << ": $" << value << "\n";
     }
-
-
-    std::vector<std::map<std::string, double>> portfolio_values = {
-    {{"AAPL", 1050.0}, {"GOOGL", 1500.0}, {"MSFT", 2000.0}},
-    {{"AAPL", 1100.0}, {"GOOGL", 1600.0}, {"MSFT", 2100.0}},
-    {{"AAPL", 1200.0}, {"GOOGL", 1700.0}, {"MSFT", 2200.0}},
-    {{"AAPL", 1250.0}, {"GOOGL", 1800.0}, {"MSFT", 2300.0}}
-    };
-
-    // plot_portfolio_values(portfolio_values);
-
-
 
     return 0;  
 }

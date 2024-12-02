@@ -4,12 +4,12 @@
 #include <string>
 #include <vector>
 #include <utility> // For std::pair
-struct PortfolioManagerResult {
+struct Portfolio_Manager_Result {
     std::vector<std::map<std::string, double>> allocations;       // Allocated funds for each stock at each hour
     std::vector<std::map<std::string, double>> portfolio_values;  // Portfolio values at each hour
 };
 
-PortfolioManagerResult portfolio_manager(
+Portfolio_Manager_Result portfolio_manager(
     const std::vector<std::vector<std::string>>& buying_stocks,
     const std::vector<double>& reallocation_funds,
     std::map<std::string, double>& my_portfolio,
@@ -17,7 +17,7 @@ PortfolioManagerResult portfolio_manager(
     const std::map<std::string, std::vector<double>>& stocks,
     const std::map<std::string, std::vector<double>>& ticker_to_percentage_changes) {
     
-    PortfolioManagerResult result;
+    Portfolio_Manager_Result result;
 
     if (buying_stocks.empty() || reallocation_funds.empty()) {
         return result; // Empty result if no stocks to buy or funds
