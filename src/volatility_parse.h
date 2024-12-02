@@ -5,6 +5,9 @@
 #include <string>
 #include <cmath>
 
+using namespace VolatilityFunctions;
+
+
 /*
 Function that returns a map with they key as the ticker(string) and the value as the 
 volatility(double) for the given time period: Hourly in this case

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <map>
 
-
+namespace VolatilityFunctions {
 
 // Function that returns the average of a vector of doubles
 // Return datatype: double 
@@ -78,3 +78,6 @@ double volatility_algorithm(std::vector<double>& stock_prices) {
         double vol = volatility(log_returns, avg_return);
         return vol;
 };
+
+
+} // namespace VolatilityFunctions
