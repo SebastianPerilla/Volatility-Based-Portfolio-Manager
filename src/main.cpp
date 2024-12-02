@@ -185,7 +185,7 @@ int main() {
         "META", "TSLA", "TSM", "AVGO", "ORCL"
     };
     for (const auto& ticker : tickers) {
-        get_stock_data(ticker, "2024-01-01", "2024-11-18", ticker_to_prices);
+        get_stock_data(ticker, "2023-12-30", "2024-11-18", ticker_to_prices);
     }
 
     // GET PORTFOLIO
