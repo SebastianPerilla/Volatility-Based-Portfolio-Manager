@@ -56,6 +56,7 @@ std::tuple<float, int, std::string> start_game() {
     std::cout << "Optimistic: Go big or go home! High-stakes investing with volatile stocks and emerging markets.\n";
     std::cout << "Neutral: A balanced strategy with growth stocks and blue-chip names for steady growth.\n";
     std::cout << "Conservative: Low-volatility stocks and steady dividends, focusing on stable companies.\n";
+    std::cout << "Pick your strategy: ";
     getline(std::cin, input);
     std::transform(input.begin(), input.end(), input.begin(),
                    [](unsigned char c){ return std::tolower(c); });

@@ -6,20 +6,7 @@
 #include <iostream>
 #include <map>
 
-
-// Function that returns the logarithmic return for a given time period
-std::vector<double> logarithmic_return_function(std::vector<double>& price) {
-    std::vector<double> r_t_list;
-    
-    // Using a regular iterator to loop through all the initial prices
-    for (std::vector<double>::iterator it = price.begin(); it != price.end()-1; ++it) {
-        double r_t = log(*(it + 1) / *it);
-        r_t_list.push_back(r_t);
-    
-    }
-    return r_t_list; // Assuming you want to return the average of r_t_list
-};
-
+namespace VolatilityFunctions {
 
 // Function that returns the average of a vector of doubles
 // Return datatype: double 
@@ -35,6 +22,19 @@ double average_return(std::vector<double> r_average_list) {
     return r_bar;
 };
 
+
+// Function that returns the logarithmic return for a given time period
+std::vector<double> logarithmic_return_function(std::vector<double>& price) {
+    std::vector<double> r_t_list;
+    
+    // Using a regular iterator to loop through all the initial prices
+    for (std::vector<double>::iterator it = price.begin(); it != price.end()-1; ++it) {
+        double r_t = log(*(it + 1) / *it);
+        r_t_list.push_back(r_t);
+    
+    }
+    return r_t_list; // Assuming you want to return the average of r_t_list
+};
 
 // Function that returns a vector of the difference between a vector of 
 // log_return for that time period and the average return for the same time period
@@ -78,3 +78,6 @@ double volatility_algorithm(std::vector<double>& stock_prices) {
         double vol = volatility(log_returns, avg_return);
         return vol;
 };
+
+
+} // namespace VolatilityFunctions
