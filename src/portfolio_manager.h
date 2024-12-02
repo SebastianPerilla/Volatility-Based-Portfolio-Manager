@@ -4,11 +4,33 @@
 #include <string>
 #include <vector>
 #include <utility> // For std::pair
+
+/**
+ * @struct Portfolio_Manager_Result
+ * @brief Holds the results of portfolio management operations.
+ *
+ * This structure contains the allocations of funds and portfolio values 
+ * at each hour during the simulation.
+ */
 struct Portfolio_Manager_Result {
     std::vector<std::map<std::string, double>> allocations;       // Allocated funds for each stock at each hour
     std::vector<std::map<std::string, double>> portfolio_values;  // Portfolio values at each hour
 };
 
+/**
+ * @brief Manages portfolio allocation and updates based on strategy and market data.
+ * 
+ * This function updates the portfolio by reallocating funds to stocks based on 
+ * the selected strategy, buying decisions, and market conditions.
+ * 
+ * @param buying_stocks A vector of stocks to buy at each hour.
+ * @param reallocation_funds A vector of funds available for reallocation at each hour.
+ * @param my_portfolio A reference to the current portfolio, mapping stock tickers to their values.
+ * @param strategy The investment strategy ("optimistic", "neutral", or "conservative").
+ * @param stocks A map of stock tickers to their volatility data over time.
+ * @param ticker_to_percentage_changes A map of stock tickers to their percentage changes over time.
+ * @return A Portfolio_Manager_Result object containing allocation and portfolio updates at each hour.
+ */
 Portfolio_Manager_Result portfolio_manager(
     const std::vector<std::vector<std::string>>& buying_stocks,
     const std::vector<double>& reallocation_funds,

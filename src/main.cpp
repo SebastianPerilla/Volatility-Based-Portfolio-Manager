@@ -16,7 +16,14 @@
 #include <cctype>
 
 
-/* FUNCTION TO INITIALISE GAME AND VARIABLES initial_investment, strategy and months*/
+/**
+ * @brief Initializes the game and sets up initial variables.
+ * 
+ * Prompts the user for initial investment, strategy, and duration in months. 
+ * Validates the input and applies default values if the user input is invalid.
+ * 
+ * @return A tuple containing the initial investment, number of months, and investment strategy.
+ */
 std::tuple<float, int, std::string> start_game() {
     std::cout << "Welcome to Stock Shock. Today is 1st of January of 2023. Let's test your investment skills.\n";
     std::cout << "You will have a series of decisions to make which will affect how your money behaves, so choose wisely!\n";
@@ -70,7 +77,15 @@ std::tuple<float, int, std::string> start_game() {
 
     return std::make_tuple(initial_investment, months, strategy);
 }
-// Function to create the portfolio
+/**
+ * @brief Creates an initial portfolio allocation.
+ * 
+ * Distributes the initial investment equally among the provided tickers.
+ * 
+ * @param tickers A vector of stock tickers.
+ * @param initial_investment The total initial investment amount.
+ * @return A map representing the portfolio with tickers as keys and allocated amounts as values.
+ */
 std::map<std::string, double> create_portfolio(const std::vector<std::string>& tickers, double initial_investment) {
     std::map<std::string, double> my_portfolio;
     if (tickers.empty()) {
@@ -85,7 +100,16 @@ std::map<std::string, double> create_portfolio(const std::vector<std::string>& t
     return my_portfolio;
 }
 
-// Template function to print a map
+/**
+ * @brief Prints the contents of a map.
+ * 
+ * A template function to print a map with customizable types and labels.
+ * 
+ * @tparam K The key type of the map.
+ * @tparam V The value type of the map.
+ * @param m The map to print.
+ * @param map_name A label to display above the map contents.
+ */
 template <typename K, typename V>
 void print_map(const std::map<K, V>& m, const std::string& map_name = "Map") {
     std::cout << map_name << ":\n";
@@ -94,7 +118,14 @@ void print_map(const std::map<K, V>& m, const std::string& map_name = "Map") {
     }
 }
 
-//Function to calculate thhe total portfolio value
+/**
+ * @brief Calculates the total value of a portfolio.
+ * 
+ * Iterates through the portfolio map to calculate the sum of all values.
+ * 
+ * @param portfolio A map representing the portfolio.
+ * @return The total value of the portfolio.
+ */
 double calculate_total_portfolio_value(const std::map<std::string, double>& portfolio) {
     double total_value = 0.0;
     for (const auto& [stock, value] : portfolio) {

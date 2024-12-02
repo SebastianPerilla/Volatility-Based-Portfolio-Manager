@@ -12,13 +12,30 @@
 
 using json = nlohmann::json;
 
-// Callback function for CURL to write response data
+/**
+ * @brief Callback function for CURL to write response data.
+ * 
+ * This function appends the response data to a user-provided string.
+ * 
+ * @param contents Pointer to the response data.
+ * @param size Size of each data element.
+ * @param nmemb Number of elements.
+ * @param userp Pointer to the user-provided string to store data.
+ * @return The number of bytes processed.
+ */
 size_t write_call_back(void* contents, size_t size, size_t nmemb, std::string* userp) {
     userp->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
 
-// Convert dates to Unix timestamps
+/**
+ * @brief Converts a date string to a Unix timestamp.
+ * 
+ * The function converts a date in the format "YYYY-MM-DD" into a Unix timestamp.
+ * 
+ * @param date The date string to convert.
+ * @return The Unix timestamp representation of the date.
+ */
 long convert_to_timestamp(const std::string& date) {
     std::tm tm = {};
     std::istringstream ss(date);
@@ -26,7 +43,17 @@ long convert_to_timestamp(const std::string& date) {
     return std::mktime(&tm);
 }
 
-// Fetch stock data and store prices in a map
+/**
+ * @brief Fetches stock data and stores prices in a map.
+ * 
+ * This function uses CURL to fetch stock data from Yahoo Finance for a specified 
+ * ticker and date range, and stores the prices in a map.
+ * 
+ * @param ticker The stock ticker symbol (e.g., "AAPL").
+ * @param start_date The start date for data retrieval in "YYYY-MM-DD" format.
+ * @param end_date The end date for data retrieval in "YYYY-MM-DD" format.
+ * @param ticker_to_prices A reference to a map to store the fetched prices.
+ */
 void get_stock_data(const std::string& ticker, const std::string& start_date, const std::string& end_date, 
                     std::map<std::string, std::vector<double>>& ticker_to_prices) {
     CURL* curl = curl_easy_init();
@@ -83,7 +110,15 @@ void get_stock_data(const std::string& ticker, const std::string& start_date, co
     curl_easy_cleanup(curl);
 }
 
-// Save data to a CSV file
+/**
+ * @brief Saves stock data to a CSV file.
+ * 
+ * This function writes stock ticker symbols and their corresponding prices 
+ * to a CSV file.
+ * 
+ * @param filename The name of the CSV file to save the data.
+ * @param ticker_to_prices The map containing ticker symbols and their prices.
+ */
 void save_to_csv(const std::string& filename, const std::map<std::string, std::vector<double>>& ticker_to_prices) {
     std::ofstream file(filename);
     if (!file.is_open()) {
@@ -104,7 +139,7 @@ void save_to_csv(const std::string& filename, const std::map<std::string, std::v
 }
 
 
-// Function to print a std::map
+// Function to print a std::map (used for debugging purposes)
 void printMap(const std::map<std::string, double>& myMap, const std::string& title) {
     std::cout << title << std::endl;
     for (const auto& [key, value] : myMap) {

@@ -5,7 +5,14 @@
 #include <vector>
 #include <utility> // For std::pair
 
-
+/**
+ * @brief Calculates the percentage changes in stock prices.
+ * 
+ * This function computes the percentage change between consecutive prices for each stock.
+ * 
+ * @param ticker_to_prices A map of stock tickers to their price vectors over time.
+ * @return A map of stock tickers to their percentage change vectors.
+ */
 std::map<std::string, std::vector<double>> calculate_percentage_changes(
     const std::map<std::string, std::vector<double>>& ticker_to_prices) {
     
@@ -37,16 +44,29 @@ std::map<std::string, std::vector<double>> calculate_percentage_changes(
     return ticker_to_percentage_changes;
 }
 
-
-// Define this struct in the same file or include it via a header file.
+/**
+ * @struct Stock_Manager_Result
+ * @brief Holds the results of stock management operations.
+ * 
+ * Contains lists of stocks to buy or sell and reallocation funds available at each hour.
+ */
 struct Stock_Manager_Result {
     std::vector<std::vector<std::string>> buying_stocks;   // List of stocks to buy at each hour
     std::vector<std::vector<std::string>> selling_stocks;  // List of stocks to sell at each hour
     std::vector<double> reallocation_funds;                // Funds freed up at each hour
 };
 
-
-
+/**
+ * @brief Manages stock buying and selling decisions based on strategy and volatility data.
+ * 
+ * This function determines which stocks to buy or sell and calculates the funds 
+ * available for reallocation based on a chosen investment strategy and stock volatility.
+ * 
+ * @param stocks A map of stock tickers to their volatility vectors over time.
+ * @param my_portfolio A reference to the current portfolio, mapping stock tickers to invested amounts.
+ * @param strategy The investment strategy ("optimistic", "neutral", or "conservative").
+ * @return A Stock_Manager_Result object containing the buying, selling decisions, and reallocation funds.
+ */
 Stock_Manager_Result stock_manager(
     const std::map<std::string, std::vector<double>>& stocks,
     std::map<std::string, double>& my_portfolio,
