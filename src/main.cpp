@@ -93,6 +93,16 @@ void print_map(const std::map<K, V>& m, const std::string& map_name = "Map") {
     }
 }
 
+//Function to calculate thhe total portfolio value
+double calculate_total_portfolio_value(const std::map<std::string, double>& portfolio) {
+    double total_value = 0.0;
+    for (const auto& [stock, value] : portfolio) {
+        total_value += value;
+    }
+    return total_value;
+}
+
+
 /*
 void plot_portfolio_values(const std::vector<std::map<std::string, double>>& portfolio_values) {
     using namespace matplot;
@@ -250,6 +260,16 @@ int main() {
     for (const auto& [stock, value] : my_portfolio) {
         std::cout << stock << ": $" << value << "\n";
     }
+
+    // Calculate and print total gain/loss
+    double final_portfolio_value = calculate_total_portfolio_value(my_portfolio);
+    double gain_loss = final_portfolio_value - initial_investment;
+
+    std::cout << "\nTotal Gain/Loss: $";
+    if (gain_loss >= 0) {
+        std::cout << "+";
+    }
+    std::cout << gain_loss << " (" << (gain_loss / initial_investment) * 100 << "%)\n";
 
     return 0;  
 }
