@@ -66,12 +66,13 @@ Portfolio_Manager_Result portfolio_manager(
         std::map<std::string, double> hour_allocation;
 
         // Skip this hour if no buying stocks or reallocation funds
-        if (buying_stocks[hour].empty() || reallocation_funds[hour] < 1.0) {
+        if (buying_stocks[hour].empty() || reallocation_funds[hour] <= 0) {
+            // Store current portfolio values
             result.portfolio_values.push_back(my_portfolio);
+            // Even if no allocation happened, store an empty allocation
             result.allocations.push_back(hour_allocation);
             continue;
         }
-
 
         // Determine weights for allocation based on strategy and average volatility
         std::map<std::string, double> allocation_weights;
@@ -89,14 +90,13 @@ Portfolio_Manager_Result portfolio_manager(
 
             double weight = 0.0;
 
-           if (strategy == "optimistic") {
-            weight = 1.0; // Equal weight for all stocks
-        } else if (strategy == "neutral") {
-            weight = 1.0;
-        } else if (strategy == "conservative") {
-            weight = 1.0 / (avg_volatility + 0.0005); // Strong inverse relationship
-}
-
+            if (strategy == "optimistic") {
+                weight = 1.0 / (avg_volatility + 0.001); // Inverse relation to volatility
+            } else if (strategy == "neutral") {
+                weight = 1.0;
+            } else if (strategy == "conservative") {
+                weight = 1.0 / (avg_volatility + 0.0005); // Stronger inverse relation
+            }
 
             allocation_weights[stock] = weight;
             total_weight += weight;
