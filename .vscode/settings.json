@@ -84,10 +84,27 @@
         "stack": "cpp",
         "unordered_set": "cpp",
         "valarray": "cpp",
+        "xstring": "cpp",
         "chrono": "cpp",
         "codecvt": "cpp",
+        "filesystem": "cpp",
+        "format": "cpp",
         "stop_token": "cpp",
         "thread": "cpp",
-        "semaphore": "cpp"
+        "xfacet": "cpp",
+        "xhash": "cpp",
+        "xiosbase": "cpp",
+        "xlocale": "cpp",
+        "xlocbuf": "cpp",
+        "xlocinfo": "cpp",
+        "xlocmes": "cpp",
+        "xlocmon": "cpp",
+        "xlocnum": "cpp",
+        "xloctime": "cpp",
+        "xmemory": "cpp",
+        "xtr1common": "cpp",
+        "xtree": "cpp",
+        "xutility": "cpp",
+        "regex": "cpp"
     }
 }

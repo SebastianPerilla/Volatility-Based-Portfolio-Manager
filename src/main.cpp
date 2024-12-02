@@ -1,47 +1,255 @@
 #include "volatility_formula.h"
+#include "portfolio_manager.h"
+#include "stock_manager.h"
 #include "volatility_parse.h"
+#include "extractor.h"
 #include <iostream>
 #include <cmath>
 #include <map>
 #include <vector>
 #include <numeric>
+#include <string>
+#include <utility>
+#include <tuple>
+#include <limits>
+#include <algorithm>
+#include <cctype>
 
 
-//Function with the main code testing each portion of the volatility calculation
-int main() {
+/* FUNCTION TO INITIALISE GAME AND VARIABLES initial_investment, strategy and months*/
+std::tuple<float, int, std::string> start_game() {
+    std::cout << "Welcome to Stock Shock. Today is 1st of January of 2023. Let's test your investment skills.\n";
+    std::cout << "You will have a series of decisions to make which will affect how your money behaves, so choose wisely!\n";
 
-    std::map<std::string, std::vector<long double>> standard_volatility = {
-        {"NVDA", {100, 200, 300, 400, 500, 600, 220, 500, 200, 400, 700, 100, 900}},
-        {"MSFT", {100, 200, 300, 400, 500, 600, 220, 500, 200, 400, 700, 100, 900}},
-        {"TSLA", {47.66699981689453, 48.11602020263672,48.10852813720703, 48.185997009277344, 48.1879997253418, 47.88399887084961, 48.185001373291016, 47.49448776245117, 47.751502990722656, 47.773990631103516, 47.62432861328125, 47.69300079345703, 47.652000427246094}},
-        {"AAPL", {}},
-        {"GOOG", {}},
-        {"META", {}},
-        {"AVGO", {}},
-    };
-
-
-    std::map<std::string, long double> output = ticker_to_vol_hourly(standard_volatility);
-    std::map<std::string, std::vector<long double>> true_vol = true_volatility(standard_volatility, output);
-
-    // for (const auto& pair : output) {
-    //     const std::string& ticker = pair.first;
-    //     const long double& vol = pair.second;
-
-    //     std::cout << "\n Ticker: " << ticker << std::endl;
-    //     std::cout << " Volatility: " << vol << std::endl;
-    // }
-
-    for (const auto& pair : true_vol) {
-        const std::string& ticker = pair.first;
-        const std::vector<long double>& prices = pair.second;
-
-        std::cout << "\n Ticker: " << ticker << std::endl;
-        std::cout << " Hourly Volatilities: " << std::endl;
-        for (auto& i : prices) {
-            std::cout << " " << i << "\n";
+    // initial investment
+    float initial_investment = 20000;
+    std::cout << "\nFirst off, how much money would you like to invest? (Enter a positive number or type 'you choose'): ";
+    std::string input;
+    getline(std::cin, input);
+    if (input != "you choose") {
+        try {
+            initial_investment = std::stof(input);
+            if (initial_investment <= 0) throw std::invalid_argument("Must be positive");
+        } catch (std::exception&) {
+            std::cout << "Invalid input. Using default of 20,000 euros." << std::endl;
+            initial_investment = 20000;
         }
     }
 
-    return 0;
+    // number of months
+    int months = 12;
+    std::cout << "\nHow many months would you like to test? (1-12 or type 'you choose'): ";
+    getline(std::cin, input);
+    if (input != "you choose") {
+        try {
+            months = std::stoi(input);
+            if (months < 1 || months > 12) throw std::out_of_range("Must be between 1 and 12");
+        } catch (std::exception&) {
+            std::cout << "Invalid input. Using default of 12 months." << std::endl;
+            months = 12;
+        }
+    }
+
+    // investment strategy
+    std::string strategy = "Neutral";
+    std::cout << "\nWhat investment strategy would you like to use? (Optimistic, Neutral, Conservative, or type 'you choose'):\n";
+    std::cout << "Optimistic: Go big or go home! High-stakes investing with volatile stocks and emerging markets.\n";
+    std::cout << "Neutral: A balanced strategy with growth stocks and blue-chip names for steady growth.\n";
+    std::cout << "Conservative: Low-volatility stocks and steady dividends, focusing on stable companies.\n";
+    getline(std::cin, input);
+    std::transform(input.begin(), input.end(), input.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+    if (input == "you choose" || (input != "optimistic" && input != "conservative")) {
+        strategy = "neutral";
+    } else if (input == "optimistic") {
+        strategy = "optimistic";
+    } else if (input == "conservative") {
+        strategy = "conservative";
+    }
+
+    return std::make_tuple(initial_investment, months, strategy);
+}
+// Function to create the portfolio
+std::map<std::string, double> create_portfolio(const std::vector<std::string>& tickers, double initial_investment) {
+    std::map<std::string, double> my_portfolio;
+    if (tickers.empty()) {
+        std::cerr << "Error: No tickers provided.\n";
+        return my_portfolio;
+    }
+    double price_per_ticker = initial_investment / tickers.size();
+    for (const auto& ticker : tickers) {
+        my_portfolio[ticker] = price_per_ticker;
+    }
+
+    return my_portfolio;
+}
+
+// Template function to print a map
+template <typename K, typename V>
+void print_map(const std::map<K, V>& m, const std::string& map_name = "Map") {
+    std::cout << map_name << ":\n";
+    for (const auto& pair : m) {
+        std::cout << "  " << pair.first << " : " << pair.second << "\n";
+    }
+}
+
+/*
+void plot_portfolio_values(const std::vector<std::map<std::string, double>>& portfolio_values) {
+    using namespace matplot;
+
+    // Prepare time-series data for each stock
+    std::map<std::string, std::vector<double>> stock_time_series;
+
+    for (size_t hour = 0; hour < portfolio_values.size(); ++hour) {
+        const auto& hourly_portfolio = portfolio_values[hour];
+        for (const auto& [stock, value] : hourly_portfolio) {
+            stock_time_series[stock].push_back(value);
+        }
+    }
+
+    // Generate x-axis (hours)
+    std::vector<double> hours(portfolio_values.size());
+    std::iota(hours.begin(), hours.end(), 0); // Fill with values 0, 1, 2, ..., n-1
+
+    // Plot each stock's time series
+    std::vector<std::string> stock_labels; // Store stock names for the legend
+    for (const auto& [stock, values] : stock_time_series) {
+        plot(hours, values);  // Add a line for each stock
+        stock_labels.push_back(stock);
+    }
+
+    // Configure the plot
+    title("Portfolio Evolution Over Time");
+    xlabel("Hour");
+    ylabel("Portfolio Value ($)");
+    legend(stock_labels);  // Add the stock names as labels in the legend
+    grid(true);
+    show();    // Display the plot
+}
+*/
+
+int main() {
+    //INIT GAME
+    float initial_investment;
+    int months;
+    std::string strategy;
+    std::tie(initial_investment, months, strategy) = start_game();
+
+    // GET PRICE PER HOUR -ISMA
+    // Map to store prices for each ticker
+    std::map<std::string, std::vector<double>> ticker_to_prices;
+    std::vector<std::string> tickers = {
+        "NVDA", "AAPL", "MSFT", "AMZN", "GOOGL",
+        "META", "TSLA", "TSM", "AVGO", "ORCL"
+    };
+    for (const auto& ticker : tickers) {
+        get_stock_data(ticker, "2024-01-01", "2024-11-18", ticker_to_prices);
+    }
+
+    // GET PORTFOLIO
+    // Determine initial investment per stock
+    std::map<std::string,double> my_portfolio = create_portfolio(tickers, initial_investment);
+
+
+    // GET VOLATILITY MAP
+    std::map<std::string, double> output = ticker_to_vol_hourly(ticker_to_prices);
+    std::map<std::string, std::vector<double>> true_vol = true_volatility(ticker_to_prices, output);
+    
+    // Calculate percentage changes
+    std::map<std::string, std::vector<double>> ticker_to_percentage_changes =
+        calculate_percentage_changes(ticker_to_prices);
+
+    // Print the initial portfolio
+    std::cout << "Initial Portfolio:\n";
+    for (const auto& [stock, value] : my_portfolio) {
+        std::cout << stock << ": $" << value << "\n";
+    }
+    std::cout << "--------------------------\n";
+
+    // Call Stock_Manager_Result and get results
+    Stock_Manager_Result stock_result = stock_manager(true_vol, my_portfolio, strategy);
+
+    // Call portfolio_manager and get results
+    Portfolio_Manager_Result portfolio_result = portfolio_manager(
+        stock_result.buying_stocks,
+        stock_result.reallocation_funds,
+        my_portfolio,
+        strategy,
+        true_vol,
+        ticker_to_percentage_changes
+    );
+
+    // PRINTING RESULTS/PLOT
+    // Print combined results for each hour
+    size_t hours = stock_result.buying_stocks.size();
+    for (size_t hour = 0; hour < hours; ++hour) {
+        std::cout << "Hour " << hour + 1 << " Results:\n";
+
+        // Print the percentage changes for each stock
+        std::cout << "  Stock Price Changes:\n";
+        for (const auto& [stock, percentage_changes] : ticker_to_percentage_changes) {
+            double percentage_change = 0.0;
+            if (hour < percentage_changes.size()) {
+                percentage_change = percentage_changes[hour];
+                std::cout << "    " << stock << ": ";
+                if (percentage_change >= 0) {
+                    std::cout << "+";
+                }
+                std::cout << percentage_change << "%\n";
+            } else {
+                // If no data for this hour, assume no change
+                std::cout << "    " << stock << ": No data\n";
+            }
+        }
+
+        // Stock Manager Results
+        std::cout << "  Stock Manager Decisions:\n";
+        std::cout << "    Buying: ";
+        for (const auto& stock : stock_result.buying_stocks[hour]) {
+            std::cout << stock << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "    Selling: ";
+        for (const auto& stock : stock_result.selling_stocks[hour]) {
+            std::cout << stock << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "    Funds Available for Reallocation: $" << stock_result.reallocation_funds[hour] << "\n";
+
+        // Portfolio Manager Results
+        std::cout << "  How much we bought:\n";
+        if (hour < portfolio_result.allocations.size() && !portfolio_result.allocations[hour].empty()) {
+            for (const auto& [stock, allocated_funds] : portfolio_result.allocations[hour]) {
+                std::cout << "    - " << stock << ": $" << allocated_funds << "\n";
+            }
+        } else {
+            std::cout << "    No funds allocated this hour.\n";
+        }
+
+                // Print the updated portfolio at the start of the hour
+        std::cout << "  Your Portfolio at the end of this hour:\n";
+        // Use the stored portfolio values for this hour
+        if (hour < portfolio_result.portfolio_values.size()) {
+            const auto& portfolio_at_hour = portfolio_result.portfolio_values[hour];
+            for (const auto& [stock, value] : portfolio_at_hour) {
+                std::cout << "    " << stock << ": $" << value << "\n";
+            }
+        } else {
+            // If for some reason we don't have portfolio values for this hour, print current my_portfolio
+            for (const auto& [stock, value] : my_portfolio) {
+                std::cout << "    " << stock << ": $" << value << "\n";
+            }
+        }
+        std::cout << "--------------------------\n";
+    }
+
+    // Print final portfolio
+    std::cout << "\nYour Final Portfolio:\n";
+    for (const auto& [stock, value] : my_portfolio) {
+        std::cout << stock << ": $" << value << "\n";
+    }
+
+    return 0;  
 }

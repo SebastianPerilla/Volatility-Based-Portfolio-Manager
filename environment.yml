@@ -1,0 +1,9 @@
+name: stocks
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - cmake>=3.20
+  - make
+  - curl
+  - nlohmann_json
