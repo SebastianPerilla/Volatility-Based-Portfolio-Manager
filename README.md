@@ -1,5 +1,35 @@
 # Computer Programming Group Project: Stock Market Investment Manager
 
+
+
+## Usage
+
+
+### Activate the Conda Environment
+
+```
+conda activate stocks
+```
+
+### Build the Project
+
+- Make sure to run the following on the root directory
+
+```
+mkdir build
+cd ./build
+cmake ..
+make
+```
+
+### To Run
+```
+cd ./bin
+./main
+```
+
+# Project Info
+
 ## Concept Diagram
 
 ![alt text](readme_images/image.png)
