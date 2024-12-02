@@ -14,6 +14,7 @@
 #include <limits>
 #include <algorithm>
 #include <cctype>
+#include <iomanip>
 
 
 /**
@@ -271,6 +272,7 @@ int main() {
         }
 
                 // Print the updated portfolio at the start of the hour
+        std::cout << std::fixed << std::setprecision(2);
         std::cout << "  Your Portfolio at the end of this hour:\n";
         // Use the stored portfolio values for this hour
         if (hour < portfolio_result.portfolio_values.size()) {
@@ -278,6 +280,7 @@ int main() {
             for (const auto& [stock, value] : portfolio_at_hour) {
                 std::cout << "    " << stock << ": $" << value << "\n";
             }
+
         } else {
             // If for some reason we don't have portfolio values for this hour, print current my_portfolio
             for (const auto& [stock, value] : my_portfolio) {
