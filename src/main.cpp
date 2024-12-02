@@ -14,6 +14,8 @@
 #include <limits>
 #include <algorithm>
 #include <cctype>
+#include <matplot/matplot.h>
+using namespace matplot;
 
 
 /**
@@ -101,24 +103,6 @@ std::map<std::string, double> create_portfolio(const std::vector<std::string>& t
 }
 
 /**
- * @brief Prints the contents of a map.
- * 
- * A template function to print a map with customizable types and labels.
- * 
- * @tparam K The key type of the map.
- * @tparam V The value type of the map.
- * @param m The map to print.
- * @param map_name A label to display above the map contents.
- */
-template <typename K, typename V>
-void print_map(const std::map<K, V>& m, const std::string& map_name = "Map") {
-    std::cout << map_name << ":\n";
-    for (const auto& pair : m) {
-        std::cout << "  " << pair.first << " : " << pair.second << "\n";
-    }
-}
-
-/**
  * @brief Calculates the total value of a portfolio.
  * 
  * Iterates through the portfolio map to calculate the sum of all values.
@@ -135,47 +119,15 @@ double calculate_total_portfolio_value(const std::map<std::string, double>& port
 }
 
 
-/*
-void plot_portfolio_values(const std::vector<std::map<std::string, double>>& portfolio_values) {
-    using namespace matplot;
-
-    // Prepare time-series data for each stock
-    std::map<std::string, std::vector<double>> stock_time_series;
-
-    for (size_t hour = 0; hour < portfolio_values.size(); ++hour) {
-        const auto& hourly_portfolio = portfolio_values[hour];
-        for (const auto& [stock, value] : hourly_portfolio) {
-            stock_time_series[stock].push_back(value);
-        }
-    }
-
-    // Generate x-axis (hours)
-    std::vector<double> hours(portfolio_values.size());
-    std::iota(hours.begin(), hours.end(), 0); // Fill with values 0, 1, 2, ..., n-1
-
-    // Plot each stock's time series
-    std::vector<std::string> stock_labels; // Store stock names for the legend
-    for (const auto& [stock, values] : stock_time_series) {
-        plot(hours, values);  // Add a line for each stock
-        stock_labels.push_back(stock);
-    }
-
-    // Configure the plot
-    title("Portfolio Evolution Over Time");
-    xlabel("Hour");
-    ylabel("Portfolio Value ($)");
-    legend(stock_labels);  // Add the stock names as labels in the legend
-    grid(true);
-    show();    // Display the plot
-}
-*/
-
 int main() {
     //INIT GAME
     float initial_investment;
     int months;
     std::string strategy;
-    std::tie(initial_investment, months, strategy) = start_game();
+    strategy = "neutral";
+    months = 12;
+    initial_investment = 20000;
+    //std::tie(initial_investment, months, strategy) = start_game();
 
     // GET PRICE PER HOUR -ISMA
     // Map to store prices for each ticker
@@ -191,7 +143,6 @@ int main() {
     // GET PORTFOLIO
     // Determine initial investment per stock
     std::map<std::string,double> my_portfolio = create_portfolio(tickers, initial_investment);
-
 
     // GET VOLATILITY MAP
     std::map<std::string, double> output = ticker_to_vol_hourly(ticker_to_prices);
@@ -220,6 +171,8 @@ int main() {
         true_vol,
         ticker_to_percentage_changes
     );
+
+    std::vector<std::map<std::string, double>> portfolio_snapshots;
 
     // PRINTING RESULTS/PLOT
     // Print combined results for each hour
@@ -275,11 +228,13 @@ int main() {
         // Use the stored portfolio values for this hour
         if (hour < portfolio_result.portfolio_values.size()) {
             const auto& portfolio_at_hour = portfolio_result.portfolio_values[hour];
+            portfolio_snapshots.push_back(portfolio_result.portfolio_values[hour]);
             for (const auto& [stock, value] : portfolio_at_hour) {
                 std::cout << "    " << stock << ": $" << value << "\n";
             }
         } else {
             // If for some reason we don't have portfolio values for this hour, print current my_portfolio
+            portfolio_snapshots.push_back(portfolio_snapshots.back());
             for (const auto& [stock, value] : my_portfolio) {
                 std::cout << "    " << stock << ": $" << value << "\n";
             }
@@ -303,5 +258,41 @@ int main() {
     }
     std::cout << gain_loss << " (" << (gain_loss / initial_investment) * 100 << "%)\n";
 
-    return 0;  
+    // PLOT the portfolio over time
+    std::map<std::string, std::vector<double>> stock_data;
+    std::vector<double> time_hours(portfolio_snapshots.size());
+
+    for (size_t i = 0; i < portfolio_snapshots.size(); ++i) {
+        time_hours[i] = i;
+        for (const auto& [stock, value] : portfolio_snapshots[i]) {
+            stock_data[stock].push_back(value);
+        }
+    }
+
+    auto ax = gca();
+    hold(ax, on); 
+    std::vector<std::string> colors = {
+        "b", "g", "r", "c", "m", "y", "k",
+        "#b", "g", "r"};
+    std::vector<std::string> markers = {"*", "*", "*", "*", "*", "*", "*", "x", "x", "x"};
+    size_t color_index = 0;
+
+    for (const auto& [stock, values] : stock_data) {
+        auto line = plot(time_hours, values);
+        (*line).line_width(2);
+        (*line).color(colors[color_index % colors.size()]);
+        (*line).marker_size(8);
+        (*line).display_name(stock);
+        ++color_index;
+    }
+
+    xlabel("Hour");
+    ylabel("Portfolio value ($)");
+    title("Portfolio Over Hours per Ticker");
+    legend()->location(legend::general_alignment::bottomright);
+    hold(ax, off);
+    show();
+
+    return 0;
+
 }
