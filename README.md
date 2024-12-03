@@ -5,9 +5,10 @@
 ## Usage
 
 
-### Activate the Conda Environment
+### Create and Activate the Conda Environment
 
 ```
+conda env create -f environment.yml
 conda activate stocks
 ```
 
