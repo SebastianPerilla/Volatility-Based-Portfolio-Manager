@@ -4,6 +4,16 @@ channels:
   - defaults
 dependencies:
   - cmake>=3.20
+  - python>=3.11
+  - clangxx
   - make
   - curl
   - nlohmann_json
+  - gnuplot
+  - tbb
+  - gcc_linux-64
+  - doxygen
+  - pip 
+  - pip:
+    - breathe
+    - sphinx

@@ -2835,3 +2835,19 @@ GENERATE_LEGEND        = YES
 # The default value is: YES.
 
 DOT_CLEANUP            = YES
+
+# You can define message sequence charts within doxygen comments using the \msc
+# command. If the MSCGEN_TOOL tag is left empty (the default), then doxygen will
+# use a built-in version of mscgen tool to produce the charts. Alternatively,
+# the MSCGEN_TOOL tag can also specify the name an external tool. For instance,
+# specifying prog as the value, doxygen will call the tool as prog -T
+# <outfile_format> -o <outputfile> <inputfile>. The external tool should support
+# output file formats "png", "eps", "svg", and "ismap".
+
+MSCGEN_TOOL            =
+
+# The MSCFILE_DIRS tag can be used to specify one or more directories that
+# contain msc files that are included in the documentation (see the \mscfile
+# command).
+
+MSCFILE_DIRS           =
