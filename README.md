@@ -170,3 +170,11 @@ Where:
 - $\sigma^2_{t-1}$ : Previous Variance
 - $r^t = ln(\frac{P_{new}}{P_{old}})$ : is the log return
 - $\lambda$ : is the Decay Factor (Determines how much weight is given to recent returns versus historical volatility.)
+
+### Graphics
+
+Make sure to define the following environment variable:
+
+```
+export GNUPLOT_DRIVER_DIR=/home/[user]/miniconda3/envs/stocks/libexec/gnuplot/5.4
+```
