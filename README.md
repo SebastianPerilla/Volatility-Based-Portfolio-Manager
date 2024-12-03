@@ -11,6 +11,13 @@
 conda activate stocks
 ```
 
+### Install the visualization library in the src directory
+
+```
+cd src
+git clone https://github.com/alandefreitas/matplotplusplus.git
+```
+
 ### Build the Project
 
 - Make sure to run the following on the root directory
