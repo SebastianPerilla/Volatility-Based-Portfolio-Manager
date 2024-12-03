@@ -125,10 +125,10 @@ int main() {
     float initial_investment;
     int months;
     std::string strategy;
-    strategy = "neutral";
-    months = 12;
-    initial_investment = 20000;
-    //std::tie(initial_investment, months, strategy) = start_game();
+    //strategy = "neutral";
+    //months = 12;
+    //initial_investment = 20000;
+    std::tie(initial_investment, months, strategy) = start_game();
 
     // GET PRICE PER HOUR -ISMA
     // Map to store prices for each ticker

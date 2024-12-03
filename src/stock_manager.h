@@ -92,7 +92,6 @@ Stock_Manager_Result stock_manager(
 
             // Get the volatility for the current hour, defaulting to the last value if out of bounds
             double avg_volatility = hour < volatility_values.size() ? volatility_values[hour] : volatility_values.back();
-            std::cout << avg_volatility << std::endl;
 
                 // Adjustments based on the strategy and average volatility
                 if (strategy == "optimistic") {
