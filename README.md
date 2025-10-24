@@ -1,4 +1,4 @@
-# Computer Programming Group Project: Stock Market Investment Manager
+# Volatility-Based Portfolio Manager
 
 
 
